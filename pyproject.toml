@@ -2,10 +2,13 @@
 name = "succulent"
 version = "0.1.0"
 description = ""
-authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>"]
+authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>, Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pyyaml = "^6.0"
+pandas = "^2.0.0"
+flask = "^2.2.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"

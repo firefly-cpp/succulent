@@ -1,0 +1,8 @@
+filetype: 'json'
+
+data:
+  - name: 'temperature'
+  - name: 'humidity'
+  - name: 'light'
+  - name: 'time'
+  - name: 'date'
