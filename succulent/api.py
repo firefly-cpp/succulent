@@ -1,5 +1,4 @@
 import os
-import yaml
 import pandas as pd
 from flask import Flask, jsonify, request
 from succulent.configuration import Configuration
@@ -41,7 +40,10 @@ def measure():
         df = pd.DataFrame(columns=columns)
 
     # Parse data from request
-    data = [request.args.get(column) for column in columns]
+    if request.is_json:
+        data = [request.json[column] for column in columns]
+    else:
+        data = [request.args.get(column) for column in columns]
     new_data = pd.Series(data, index=columns)
 
     # Merge data
