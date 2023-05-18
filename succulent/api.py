@@ -1,20 +1,12 @@
 import os
 import yaml
-
 import pandas as pd
-
 from flask import Flask, jsonify, request
+from succulent.configuration import Configuration
 
-def load_config():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), '..', 'configuration.yml'
-    )
-    with open(path, 'r') as yml:
-        config = yaml.safe_load(yml)
-        return config
-
+conf = Configuration('configuration.yml');
 # Configuration file
-config = load_config()
+config = conf.load_config()
 
 # Data configuration
 columns = [configuration['name'] for configuration in config['data']]
@@ -37,7 +29,7 @@ def measure():
     output_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'data', f'data.{filetype}'
     )
-    
+
     # Load existing data
     if os.path.exists(path):
         if filetype == 'csv':
@@ -61,7 +53,7 @@ def measure():
             df.to_csv(output_path, sep=',', index=False)
         case 'json':
             df.to_json(output_path, orient='records', indent=4)
-    
+
     return jsonify({'success': True}), 200
 
 app.run(host='0.0.0.0', port=8080)
