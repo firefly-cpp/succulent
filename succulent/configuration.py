@@ -1,3 +1,6 @@
+import os
+import yaml
+
 class Configuration:
     def __init__(self, path):
         self.path = path
