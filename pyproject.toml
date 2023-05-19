@@ -1,8 +1,13 @@
 [tool.poetry]
 name = "succulent"
 version = "0.1.0"
-description = ""
+description = "Collect POST requests easily"
+license = "MIT"
 authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>, Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
+keywords = ['data collection', 'data science', 'sensor measurements']
+homepage = "hhttps://github.com/firefly-cpp/succulent"
+repository = "https://github.com/firefly-cpp/succulent"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
