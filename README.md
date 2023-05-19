@@ -25,19 +25,26 @@ Install succulent with pip:
 pip install sucullent
 ```
 
-***
+## Usage
+
+### Example
+
+```python
+from succulent.api import SucculentAPI
+api = SucculentAPI(host='0.0.0.0', port=8080, config='configuration.yml')
+api.start()
+```
+
 ## Prerequisites
 * [Python](https://www.python.org)
 * [poetry](https://python-poetry.org/docs)
 
-***
 ## Environment
 To setup the environment, execute the following command:
 ```bash
 › poetry install
 ```
 
-***
 ## Configuration
 In the root directory, create a file named `configuration.yml` and define the following:
 ```yml
@@ -47,7 +54,6 @@ data:
   - name: # Measure name
 ```
 
-***
 ## Launch
 To launch the application, execute the following command:
 ```bash
