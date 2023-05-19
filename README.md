@@ -6,7 +6,7 @@
 
 ## About
 
-sucullent is a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. The inspiration for the framework comes from the practical data collection challenges in smart agriculture. The main idea of the framework was to speed up the process of configuring different collected parameters and providing several useful functions for data transformations.
+succulent is a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. The inspiration for the framework comes from the practical data collection challenges in smart agriculture. The main idea of the framework was to speed up the process of configuring different collected parameters and providing several useful functions for data transformations.
 
 ## Detailed insights
 The current version includes (but is not limited to) the following functions:
@@ -21,7 +21,7 @@ The current version includes (but is not limited to) the following functions:
 Install succulent with pip:
 
 ```sh
-pip install sucullent
+pip install succulent
 ```
 
 ## Usage
