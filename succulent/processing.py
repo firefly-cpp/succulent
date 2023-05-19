@@ -26,6 +26,9 @@ class Processing:
                 df = pd.read_csv(path, sep=',')
             elif self.filetype == 'json':
                 df = pd.read_json(path, orient='records')
+            else:
+                raise ValueError(f'Invalid file type: {self.filetype}')
+
         # Initialise new data
         else:
             df = pd.DataFrame(columns=self.columns)
@@ -46,3 +49,5 @@ class Processing:
                 df.to_csv(output_path, sep=',', index=False)
             case 'json':
                 df.to_json(output_path, orient='records', indent=4)
+            case _:
+                raise ValueError(f'Invalid file type: {self.filetype}')

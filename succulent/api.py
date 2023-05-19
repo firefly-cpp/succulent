@@ -22,8 +22,11 @@ def url():
 
 @app.route('/measure', methods=['POST'])
 def measure():
-    # Process request
-    processing.process(request)
+    try:
+        # Process request
+        processing.process(request)
+    except ValueError:
+        return jsonify({'message': f'Invalid file type: {config["filetype"]}. Use one of the supported file types (csv, json)'}), 400
 
     # Send response
     return jsonify({'message': 'Data stored'}), 200
