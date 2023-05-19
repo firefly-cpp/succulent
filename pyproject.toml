@@ -3,9 +3,9 @@ name = "succulent"
 version = "0.1.0"
 description = "Collect POST requests easily"
 license = "MIT"
-authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>, Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
+authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>", "Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
 keywords = ['data collection', 'data science', 'sensor measurements']
-homepage = "hhttps://github.com/firefly-cpp/succulent"
+homepage = "https://github.com/firefly-cpp/succulent"
 repository = "https://github.com/firefly-cpp/succulent"
 readme = "README.md"
 
