@@ -2,33 +2,40 @@ from flask import Flask, jsonify, request
 from succulent.configuration import Configuration
 from succulent.processing import Processing
 
-# Configuration file
-conf = Configuration('configuration.yml');
-config = conf.load_config()
+class SucculentAPI:
+    def __init__(self, host, port, config):
+        self.host = host
+        self.port = port
 
-# Initialise processing
-processing = Processing(config)
+        # Configuration file
+        conf = Configuration(config)
+        self.config = conf.load_config()
 
-# Initialise Flask
-app = Flask(__name__)
+        # Initialise processing
+        self.processing = Processing(self.config)
 
-@app.route('/measure', methods=['GET'])
-def url():
-    # Generate URL
-    parameters = processing.parameters()
+        # Initialise Flask
+        self.app = Flask(__name__)
+        self.app.add_url_rule('/measure', 'url', self.url, methods=['GET'])
+        self.app.add_url_rule('/measure', 'measure', self.measure, methods=['POST'])
 
-    # Send response
-    return jsonify({'url': f'0.0.0.0:8080/measure?{parameters}' }), 200
+    def url(self):
+        # Generate URL
+        parameters = self.processing.parameters()
 
-@app.route('/measure', methods=['POST'])
-def measure():
-    try:
-        # Process request
-        processing.process(request)
-    except ValueError:
-        return jsonify({'message': f'Invalid file type: {config["filetype"]}. Use one of the supported file types (csv, json)'}), 400
+        # Send response
+        return jsonify({'url': f'{self.host}:{self.port}/measure?{parameters}'}), 200
 
-    # Send response
-    return jsonify({'message': 'Data stored'}), 200
+    def measure(self):
+        try:
+            # Process request
+            self.processing.process(request)
+        except ValueError:
+            # Invalid file type
+            return jsonify({'message': f'Invalid file type: {self.config["filetype"]}. Supported file types: csv, json'}), 400
 
-app.run(host='0.0.0.0', port=8080)
+        # Send response
+        return jsonify({'message': 'Data stored'}), 200
+
+    def start(self):
+        self.app.run(host=self.host, port=self.port)
