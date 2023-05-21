@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import pandas as pd
 
 class Processing:
@@ -26,6 +27,10 @@ class Processing:
                 df = pd.read_csv(path, sep=',')
             elif self.format == 'json':
                 df = pd.read_json(path, orient='records')
+            elif self.format == 'sqlite':
+                conn = sqlite3.connect(path)
+                df = pd.read_sql_query("SELECT * FROM data", conn)
+                conn.close()
             else:
                 raise ValueError(f'Invalid file type: {self.format}')
         # Initialise new data
@@ -56,5 +61,9 @@ class Processing:
             df.to_csv(output_path, sep=',', index=False)
         elif self.format == 'json':
             df.to_json(output_path, orient='records', indent=4)
+        elif self.format == 'sqlite':
+            conn = sqlite3.connect(output_path)
+            df.to_sql('data', conn, if_exists='replace', index=False)
+            conn.close()
         else:
             raise ValueError(f'Invalid format: {self.format}')
