@@ -3,7 +3,7 @@ from succulent.configuration import Configuration
 from succulent.processing import Processing
 
 class SucculentAPI:
-    def __init__(self, host, port, config, format):
+    def __init__(self, host, port, config, format='csv'):
         self.host = host
         self.port = port
         self.format = format
