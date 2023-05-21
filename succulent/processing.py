@@ -28,20 +28,28 @@ class Processing:
                 df = pd.read_json(path, orient='records')
             else:
                 raise ValueError(f'Invalid file type: {self.format}')
-
         # Initialise new data
         else:
             df = pd.DataFrame(columns=self.columns)
 
         # Parse data from request
+        data = {}
         if req.is_json:
-            data = [req.json[column] for column in self.columns]
+            for column in self.columns:
+                try:
+                    data[column] = req.json[column]
+                except:
+                    data[column] = None
         else:
-            data = [req.args.get(column) for column in self.columns]
-        new_data = pd.Series(data, index=self.columns)
+            for column in self.columns:
+                try: 
+                    data[column] = req.args.get(column)
+                except:
+                    data[column] = None
+        data = pd.Series(data, index=self.columns)
 
         # Merge data
-        df = pd.concat([df, new_data.to_frame().T], ignore_index=True)
+        df = pd.concat([df, data.to_frame().T], ignore_index=True)
 
         # Store data to device
         if self.format == 'csv':
@@ -49,4 +57,4 @@ class Processing:
         elif self.format == 'json':
             df.to_json(output_path, orient='records', indent=4)
         else:
-            raise ValueError(f'Invalid file type: {self.format}')
+            raise ValueError(f'Invalid format: {self.format}')
