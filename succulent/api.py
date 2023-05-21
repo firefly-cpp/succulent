@@ -3,16 +3,17 @@ from succulent.configuration import Configuration
 from succulent.processing import Processing
 
 class SucculentAPI:
-    def __init__(self, host, port, config):
+    def __init__(self, host, port, config, format):
         self.host = host
         self.port = port
+        self.format = format
 
         # Configuration file
         conf = Configuration(config)
         self.config = conf.load_config()
 
         # Initialise processing
-        self.processing = Processing(self.config)
+        self.processing = Processing(self.config, self.format)
 
         # Initialise Flask
         self.app = Flask(__name__)
@@ -32,7 +33,7 @@ class SucculentAPI:
             self.processing.process(request)
         except ValueError:
             # Invalid file type
-            return jsonify({'message': f'Invalid file type: {self.config["filetype"]}. Supported file types: csv, json'}), 400
+            return jsonify({'message': f'Invalid file type: {self.format}. Supported file types: csv, json'}), 400
 
         # Send response
         return jsonify({'message': 'Data stored'}), 200

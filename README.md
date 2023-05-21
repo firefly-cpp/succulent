@@ -38,15 +38,13 @@ pip install succulent
 
 ```python
 from succulent.api import SucculentAPI
-api = SucculentAPI(host='0.0.0.0', port=8080, config='configuration.yml')
+api = SucculentAPI(host='0.0.0.0', port=8080, config='configuration.yml', format='csv')
 api.start()
 ```
 
 ## Configuration
 In the root directory, create a file named `configuration.yml` and define the following:
 ```yml
-filetype: # File type (csv or json)
-
 data:
   - name: # Measure name
 ```

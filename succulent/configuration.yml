@@ -1,5 +1,3 @@
-filetype: 'json'
-
 data:
   - name: 'temperature'
   - name: 'humidity'
