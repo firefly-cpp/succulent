@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from succulent.configuration import Configuration
 from succulent.processing import Processing
+from datetime import datetime
 
 class SucculentAPI:
     def __init__(self, host, port, config, format='csv'):
@@ -13,7 +14,7 @@ class SucculentAPI:
         self.config = conf.load_config()
 
         # Initialise processing
-        self.processing = Processing(self.config, self.format)
+        self.processing = Processing(self.config['data'], self.format)
 
         # Initialise Flask
         self.app = Flask(__name__)
@@ -31,12 +32,17 @@ class SucculentAPI:
         try:
             # Process request
             self.processing.process(request)
+            
+            # Collect and store timestamp
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # You can store the timestamp in a database, file, or any other desired storage mechanism.
+            # Example: database.insert_timestamp(timestamp)
         except ValueError:
             # Invalid file type
             return jsonify({'message': f'Invalid file type: {self.format}. Supported file types: csv, json'}), 400
 
         # Send response
-        return jsonify({'message': 'Data stored'}), 200
+        return jsonify({'message': 'Data stored', 'timestamp': timestamp}), 200
 
     def start(self):
         self.app.run(host=self.host, port=self.port)

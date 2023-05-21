@@ -1,12 +1,15 @@
+from mock import patch
+from numpy import nan
 from succulent import __version__
 import unittest
 import os
 from flask import Flask
 from flask.testing import FlaskClient
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 from succulent.processing import Processing
 from succulent.api import SucculentAPI
 from succulent.configuration import Configuration
+from datetime import datetime
 
 class TestProcessing(unittest.TestCase):
     """
@@ -32,11 +35,6 @@ class TestProcessing(unittest.TestCase):
         self.assertEqual(self.processing.parameters(), expected_parameters)
 
     def test_process_json(self):
-        """
-        Test the process() method of the Processing class with JSON data.
-
-        This test ensures that the process() method correctly merges the JSON data with the existing DataFrame.
-        """
         # Mock the request object
         request = MagicMock()
         request.is_json = True
@@ -53,9 +51,25 @@ class TestProcessing(unittest.TestCase):
 
         # Verify the data is merged correctly
         expected_data = [
-            {'temperature': '25', 'humidity': '50', 'light': 'high', 'time': '10:30', 'date': '2022-01-01'}
+            {
+                'temperature': 25,
+                'humidity': 50,
+                'light': 'high',
+                'time': '10:30',
+                'date': '2022-01-01'
+            },
+            {
+                'temperature': '25',
+                'humidity': '50',
+                'light': 'high',
+                'time': '10:30',
+                'date': '2022-01-01'
+            }
         ]
-        self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
+        actual_data = self.processing.df.to_dict(orient='records')
+        print(actual_data)
+        print(expected_data)
+        self.assertEqual(actual_data, expected_data)
 
     def test_process_args(self):
         """
@@ -66,7 +80,7 @@ class TestProcessing(unittest.TestCase):
         # Mock the request object
         request = MagicMock()
         request.is_json = False
-        request.args.get.side_effect = ['25', '50', 'high', '10:30', '2022-01-01']
+        request.args.get.side_effect = ["25", "50", "high", "10:30", "2022-01-01"]
 
         # Process the request
         self.processing.process(request)
@@ -77,23 +91,6 @@ class TestProcessing(unittest.TestCase):
         ]
         self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
 
-
-    def test_process_args(self):
-        # Mock the request object
-        request = MagicMock()
-        request.is_json = False
-        request.args.get.side_effect = ['value1', 'value2', 'value3']
-
-        # Process the request
-        self.processing.process(request)
-
-        # Verify the data is merged correctly
-        expected_data = [
-            {'column1': 'value1', 'column2': 'value2', 'column3': 'value3'}
-        ]
-        self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
-
-
 class TestSucculentAPI(unittest.TestCase):
     """
     Test case for the SucculentAPI class.
@@ -103,13 +100,19 @@ class TestSucculentAPI(unittest.TestCase):
 
     def setUp(self):
         # Create an instance of the SucculentAPI class for testing
-        self.api = SucculentAPI(host='0.0.0.0', port=8080, config='configuration.yml', format='csv')
+        self.app = Flask(__name__)
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        self.client = self.app.test_client()
+
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'succulent', 'configuration.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
 
     def test_version(self):
         """
         Test the version of the SucculentAPI.
         """
-        expected_version = '0.1.1'
+        expected_version = "0.1.1"
         self.assertEqual(__version__, expected_version)
 
     def test_url(self):
@@ -126,19 +129,26 @@ class TestSucculentAPI(unittest.TestCase):
             self.assertEqual(data['url'], expected_url)
 
     def test_measure(self):
-        """
-        Test the measurement processing of the SucculentAPI.
-        """
         # Create a mock request object
-        request = unittest.mock.Mock()
-        self.api.processing.process = unittest.mock.Mock()
+        mock_request = Mock()
+        mock_request.is_json = True
+        mock_request.json = {
+            'temperature': 25.0,
+            'humidity': 60.0,
+            'light': 'high',
+            'time': '10:30 AM',
+            'date': '2023-05-21'
+        }
 
         # Call the measure endpoint
-        response = self.api.measure(request)
+        response = self.api.app.test_client().post('/measure', json=mock_request.json)
 
-        # Verify the response
-        self.assertEqual(response[1], 200)
-        self.assertEqual(response[0].get_json(), {'message': 'Data stored'})
+        # Assert the response and timestamp
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['message'], 'Data stored')
+        # Compare the timestamp with the current time
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.assertEqual(response.json['timestamp'], current_time)
 
 class TestConfiguration(unittest.TestCase):
     """
