@@ -44,10 +44,9 @@ class Processing:
         df = pd.concat([df, new_data.to_frame().T], ignore_index=True)
 
         # Store data to device
-        match self.filetype:
-            case 'csv':
-                df.to_csv(output_path, sep=',', index=False)
-            case 'json':
-                df.to_json(output_path, orient='records', indent=4)
-            case _:
-                raise ValueError(f'Invalid file type: {self.filetype}')
+        if self.filetype == 'csv':
+            df.to_csv(output_path, sep=',', index=False)
+        elif self.filetype == 'json':
+            df.to_json(output_path, orient='records', indent=4)
+        else:
+            raise ValueError(f'Invalid file type: {self.filetype}')
