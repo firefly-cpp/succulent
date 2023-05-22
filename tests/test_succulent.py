@@ -112,7 +112,7 @@ class TestSucculentAPI(unittest.TestCase):
         """
         Test the version of the SucculentAPI.
         """
-        expected_version = "0.1.1"
+        expected_version = "0.1.2"
         self.assertEqual(__version__, expected_version)
 
     def test_url(self):
