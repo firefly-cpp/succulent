@@ -14,12 +14,17 @@ class Processing:
         return parameters
         
     def process(self, req):
+        # Directory preparation
+        directory = os.path.join(os.path.abspath(os.getcwd()), 'data')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         # Define paths
         path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'data', f'data.{self.format}'
+            os.path.abspath(os.getcwd()), 'data', f'data.{self.format}'
         )
         output_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'data', f'data.{self.format}'
+            os.path.abspath(os.getcwd()), 'data', f'data.{self.format}'
         )
 
         # Load existing data
