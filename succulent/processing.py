@@ -5,7 +5,8 @@ import pandas as pd
 class Processing:
     def __init__(self, config, format):
         self.format = format
-        self.columns = [configuration['name'] for configuration in config['data']]
+        self.columns = [configuration['name'] for configuration in config]
+        self.df = None  # Initialize df attribute
     
     def parameters(self):
         parameters = [f'{column}=' for column in self.columns]
@@ -24,18 +25,18 @@ class Processing:
         # Load existing data
         if os.path.exists(path):
             if self.format == 'csv':
-                df = pd.read_csv(path, sep=',')
+                self.df = pd.read_csv(path, sep=',')
             elif self.format == 'json':
-                df = pd.read_json(path, orient='records')
+                self.df = pd.read_json(path, orient='records')
             elif self.format == 'sqlite':
                 conn = sqlite3.connect(path)
-                df = pd.read_sql_query("SELECT * FROM data", conn)
+                self.df = pd.read_sql_query("SELECT * FROM data", conn)
                 conn.close()
             else:
                 raise ValueError(f'Invalid file type: {self.format}')
         # Initialise new data
         else:
-            df = pd.DataFrame(columns=self.columns)
+            self.df = pd.DataFrame(columns=self.columns)
 
         # Parse data from request
         data = {}
@@ -48,22 +49,22 @@ class Processing:
         else:
             for column in self.columns:
                 try: 
-                    data[column] = req.args.get(column)
+                    data[column] = str(req.args.get(column, default=''))
                 except:
-                    data[column] = None
+                    data[column] = ''
         data = pd.Series(data, index=self.columns)
 
         # Merge data
-        df = pd.concat([df, data.to_frame().T], ignore_index=True)
+        self.df = pd.concat([self.df, data.to_frame().T], ignore_index=True)
 
         # Store data to device
         if self.format == 'csv':
-            df.to_csv(output_path, sep=',', index=False)
+            self.df.to_csv(output_path, sep=',', index=False)
         elif self.format == 'json':
-            df.to_json(output_path, orient='records', indent=4)
+            self.df.to_json(output_path, orient='records', indent=4)
         elif self.format == 'sqlite':
             conn = sqlite3.connect(output_path)
-            df.to_sql('data', conn, if_exists='replace', index=False)
+            self.df.to_sql('data', conn, if_exists='replace', index=False)
             conn.close()
         else:
             raise ValueError(f'Invalid format: {self.format}')
