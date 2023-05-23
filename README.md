@@ -31,6 +31,13 @@ Install succulent with pip:
 ```sh
 pip install succulent
 ```
+### Alpine Linux
+
+To install succulent on Alpine Linux, please use:
+
+```sh
+$ apk add py3-succulent
+```
 
 ## Usage
 
