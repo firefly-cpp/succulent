@@ -3,4 +3,4 @@ from succulent.configuration import Configuration
 __all__ = [
     'Configuration']
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'

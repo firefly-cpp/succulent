@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "succulent"
-version = "0.1.2"
+version = "0.1.3"
 description = "Collect POST requests easily"
 license = "MIT"
 authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>", "Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
