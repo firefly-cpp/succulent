@@ -132,4 +132,4 @@ dmypy.json
 poetry.lock
 
 # Data
-/data
+data/

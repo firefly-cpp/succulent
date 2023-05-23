@@ -1,9 +1,11 @@
 import os
 import sqlite3
+import inspect
 import pandas as pd
 
 class Processing:
     def __init__(self, config, format):
+        self.directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[2].filename)), 'data')
         self.format = format
         self.columns = [configuration['name'] for configuration in config]
         self.df = None  # Initialize df attribute
@@ -15,16 +17,12 @@ class Processing:
         
     def process(self, req):
         # Directory preparation
-        directory = os.path.join(os.path.abspath(os.getcwd()), 'data')
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
 
         # Define paths
         path = os.path.join(
-            os.path.abspath(os.getcwd()), 'data', f'data.{self.format}'
-        )
-        output_path = os.path.join(
-            os.path.abspath(os.getcwd()), 'data', f'data.{self.format}'
+            self.directory, f'data.{self.format}'
         )
 
         # Load existing data
@@ -64,11 +62,11 @@ class Processing:
 
         # Store data to device
         if self.format == 'csv':
-            self.df.to_csv(output_path, sep=',', index=False)
+            self.df.to_csv(path, sep=',', index=False)
         elif self.format == 'json':
-            self.df.to_json(output_path, orient='records', indent=4)
+            self.df.to_json(path, orient='records', indent=4)
         elif self.format == 'sqlite':
-            conn = sqlite3.connect(output_path)
+            conn = sqlite3.connect(path)
             self.df.to_sql('data', conn, if_exists='replace', index=False)
             conn.close()
         else:
