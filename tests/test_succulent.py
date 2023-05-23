@@ -20,7 +20,7 @@ class TestProcessing(unittest.TestCase):
 
     def setUp(self):
         # Load configuration from configuration.yml
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'succulent', 'configuration.yml')
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         configuration = Configuration(config_path)
         config = configuration.load_config()
         self.processing = Processing(config['data'], 'csv')
@@ -105,7 +105,7 @@ class TestSucculentAPI(unittest.TestCase):
         self.app_context.push()
         self.client = self.app.test_client()
 
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'succulent', 'configuration.yml')
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
 
     def test_version(self):
@@ -159,7 +159,7 @@ class TestConfiguration(unittest.TestCase):
 
     def setUp(self):
         # Get the path to the configuration.yml file
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'succulent', 'configuration.yml')
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         self.configuration = Configuration(config_path)
 
     def test_load_config(self):
