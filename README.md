@@ -39,6 +39,10 @@ To install succulent on Alpine Linux, please use:
 $ apk add py3-succulent
 ```
 
+## Container
+
+[Basic container for succulent](https://github.com/firefly-cpp/succulent-container)
+
 ## Usage
 
 ### Example
