@@ -24,6 +24,7 @@ The current version includes (but is not limited to) the following functions:
 
 - Request URL generation for data collection
 - Data collection from POST requests
+- Storing data in different formats (CSV, JSON, SQLite)
 
 ## Installation
 
