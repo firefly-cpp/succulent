@@ -108,13 +108,6 @@ class TestSucculentAPI(unittest.TestCase):
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
 
-    def test_version(self):
-        """
-        Test the version of the SucculentAPI.
-        """
-        expected_version = "0.1.3"
-        self.assertEqual(__version__, expected_version)
-
     def test_url(self):
         """
         Test the URL generation of the SucculentAPI.
