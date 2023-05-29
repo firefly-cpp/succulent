@@ -5,15 +5,34 @@ import pandas as pd
 
 class Processing:
     def __init__(self, config, format):
+        # Validate format
+        if format not in ['csv', 'json', 'sqlite']:
+            raise ValueError(f'Invalid format: {format}')
+        
+        # Initialise attributes
         self.directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[2].filename)), 'data')
         self.format = format
         self.columns = [configuration['name'] for configuration in config]
+        self.boundaries = [{ 
+            configuration['name']: {
+                key: configuration[key]
+                for key in ['min', 'max']
+                if key in configuration
+            }
+        } for configuration in config if configuration.get('min') is not None or configuration.get('max') is not None]
         self.df = None  # Initialize df attribute
     
     def parameters(self):
         parameters = [f'{column}=' for column in self.columns]
         parameters = '&'.join(parameters)
         return parameters
+    
+    def boundary(self, value, boundary, column):
+        if 'min' in boundary and float(value) < float(boundary['min']):
+            raise ValueError(f'{column} ({value}) is lower than the specified minimum ({boundary["min"]}).')
+        if 'max' in boundary and float(value) > float(boundary['max']):
+            raise ValueError(f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
+        return value
         
     def process(self, req):
         # Directory preparation
@@ -43,18 +62,21 @@ class Processing:
 
         # Parse data from request
         data = {}
-        if req.is_json:
-            for column in self.columns:
-                try:
-                    data[column] = req.json[column]
-                except:
-                    data[column] = None
-        else:
-            for column in self.columns:
-                try: 
-                    data[column] = str(req.args.get(column, default=''))
-                except:
-                    data[column] = ''
+        for column in self.columns:
+            # Request type
+            if req.is_json:
+                value = req.json[column] if column in req.json else None
+            else:
+                value = req.args.get(column, default=None)
+
+            # Boundary check
+            if column in [list(boundaries.keys())[0] for boundaries in self.boundaries]:
+                index = [list(boundaries.keys())[0] for boundaries in self.boundaries].index(column)
+                data[column] = self.boundary(value, self.boundaries[index][column], column)
+            else:
+                data[column] = value
+
+        # Convert data to Series
         data = pd.Series(data, index=self.columns)
 
         # Merge data
@@ -69,5 +91,3 @@ class Processing:
             conn = sqlite3.connect(path)
             self.df.to_sql('data', conn, if_exists='replace', index=False)
             conn.close()
-        else:
-            raise ValueError(f'Invalid format: {self.format}')

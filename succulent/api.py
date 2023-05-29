@@ -37,9 +37,9 @@ class SucculentAPI:
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             # You can store the timestamp in a database, file, or any other desired storage mechanism.
             # Example: database.insert_timestamp(timestamp)
-        except ValueError:
+        except ValueError as err:
             # Invalid file type
-            return jsonify({'message': f'Invalid file type: {self.format}. Supported file types: csv, json'}), 400
+            return jsonify({'message': str(err)}), 400
 
         # Send response
         return jsonify({'message': 'Data stored', 'timestamp': timestamp}), 200
