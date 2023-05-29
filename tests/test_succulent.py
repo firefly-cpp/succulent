@@ -143,6 +143,42 @@ class TestSucculentAPI(unittest.TestCase):
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.assertEqual(response.json['timestamp'], current_time)
 
+    def test_upper_boundary(self):
+        # Create a mock request object
+        mock_request = Mock()
+        mock_request.is_json = True
+        mock_request.json = {
+            'temperature': 100.0, # This is above the upper boundary of 50.0
+            'humidity': 60.0,
+            'light': 'high',
+            'time': '10:30 AM',
+            'date': '2023-05-21'
+        }
+
+        # Call the measure endpoint
+        response = self.api.app.test_client().post('/measure', json=mock_request.json)
+
+        # Assert the response
+        self.assertEqual(response.status_code, 400)
+
+    def test_lower_boundary(self):
+        # Create a mock request object
+        mock_request = Mock()
+        mock_request.is_json = True
+        mock_request.json = {
+            'temperature': -100.0, # This is below the lower boundary of -20.0
+            'humidity': 60.0,
+            'light': 'high',
+            'time': '10:30 AM',
+            'date': '2023-05-21'
+        }
+
+        # Call the measure endpoint
+        response = self.api.app.test_client().post('/measure', json=mock_request.json)
+
+        # Assert the response
+        self.assertEqual(response.status_code, 400)
+
 class TestConfiguration(unittest.TestCase):
     """
     Test case for the Configuration class.
@@ -167,7 +203,7 @@ class TestConfiguration(unittest.TestCase):
         # Verify the loaded configuration
         expected_config = {
             'data': [
-                {'name': 'temperature'},
+                {'name': 'temperature', 'min': -20.0, 'max': 50.0},
                 {'name': 'humidity'},
                 {'name': 'light'},
                 {'name': 'time'},
