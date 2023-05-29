@@ -62,6 +62,8 @@ In the root directory, create a file named `configuration.yml` and define the fo
 ```yml
 data:
   - name: # Measure name
+    min: # Minimum value (optional)
+    max: # Maximum value (optional)
 ```
 
 ## License
