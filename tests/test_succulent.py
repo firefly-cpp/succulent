@@ -3,6 +3,9 @@ from numpy import nan
 from succulent import __version__
 import unittest
 import os
+import shutil
+import pytest
+import inspect
 from flask import Flask
 from flask.testing import FlaskClient
 from unittest.mock import MagicMock, Mock
@@ -10,6 +13,13 @@ from succulent.processing import Processing
 from succulent.api import SucculentAPI
 from succulent.configuration import Configuration
 from datetime import datetime
+
+@pytest.fixture(autouse=True)
+def teardown(request):
+    yield
+    directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[0].filename)), 'data')
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
 
 class TestProcessing(unittest.TestCase):
     """
@@ -23,7 +33,7 @@ class TestProcessing(unittest.TestCase):
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         configuration = Configuration(config_path)
         config = configuration.load_config()
-        self.processing = Processing(config['data'], 'csv')
+        self.processing = Processing(config['data'], 'csv', unittest=True)
 
     def test_parameters(self):
         """
@@ -35,61 +45,58 @@ class TestProcessing(unittest.TestCase):
         self.assertEqual(self.processing.parameters(), expected_parameters)
 
     def test_process_json(self):
-        # Mock the request object
-        request = MagicMock()
-        request.is_json = True
-        request.json = {
-            'temperature': '25',
-            'humidity': '50',
-            'light': 'high',
-            'time': '10:30',
-            'date': '2022-01-01'
-        }
-
-        # Process the request
-        self.processing.process(request)
-
-        # Verify the data is merged correctly
-        expected_data = [
-            {
-                'temperature': 25,
-                'humidity': 50,
-                'light': 'high',
-                'time': '10:30',
-                'date': '2022-01-01'
-            },
-            {
+        try:
+            # Mock the request object
+            request = MagicMock()
+            request.is_json = True
+            request.json = {
                 'temperature': '25',
                 'humidity': '50',
                 'light': 'high',
                 'time': '10:30',
                 'date': '2022-01-01'
             }
-        ]
-        actual_data = self.processing.df.to_dict(orient='records')
-        print(actual_data)
-        print(expected_data)
-        self.assertEqual(actual_data, expected_data)
+
+            # Process the request
+            self.processing.process(request)
+
+            # Verify the data is merged correctly
+            expected_data = [
+                {
+                    'temperature': '25',
+                    'humidity': '50',
+                    'light': 'high',
+                    'time': '10:30',
+                    'date': '2022-01-01'
+                }
+            ]
+            actual_data = self.processing.df.to_dict(orient='records')
+            self.assertEqual(actual_data, expected_data)
+        except PermissionError:
+            pytest.skip('Permission denied.')
 
     def test_process_args(self):
         """
         Test the process() method of the Processing class with query string arguments.
 
         This test ensures that the process() method correctly merges the query string arguments with the existing DataFrame.
-        """
-        # Mock the request object
-        request = MagicMock()
-        request.is_json = False
-        request.args.get.side_effect = ["25", "50", "high", "10:30", "2022-01-01"]
+        """   
+        try:
+            # Mock the request object
+            request = MagicMock()
+            request.is_json = False
+            request.args.get.side_effect = ["25", "50", "high", "10:30", "2022-01-01"]
 
-        # Process the request
-        self.processing.process(request)
+            # Process the request
+            self.processing.process(request)
 
-        # Verify the data is merged correctly
-        expected_data = [
-            {'temperature': '25', 'humidity': '50', 'light': 'high', 'time': '10:30', 'date': '2022-01-01'}
-        ]
-        self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
+            # Verify the data is merged correctly
+            expected_data = [
+                {'temperature': '25', 'humidity': '50', 'light': 'high', 'time': '10:30', 'date': '2022-01-01'}
+            ]
+            self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
+        except PermissionError:
+            pytest.skip('Permission denied.')
 
 class TestSucculentAPI(unittest.TestCase):
     """

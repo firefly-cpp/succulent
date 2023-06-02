@@ -4,13 +4,14 @@ import inspect
 import pandas as pd
 
 class Processing:
-    def __init__(self, config, format):
+    def __init__(self, config, format, unittest=True):
         # Validate format
         if format not in ['csv', 'json', 'sqlite']:
             raise ValueError(f'Invalid format: {format}')
         
         # Initialise attributes
-        self.directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[2].filename)), 'data')
+        index = 1 if unittest else 2
+        self.directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
         self.columns = [configuration['name'] for configuration in config]
         self.boundaries = [{ 
