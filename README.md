@@ -25,6 +25,7 @@ The current version includes (but is not limited to) the following functions:
 - Request URL generation for data collection
 - Data collection from POST requests
 - Storing data in different formats (CSV, JSON, SQLite)
+- Defining boundaries for collected data (min, max)
 
 ## Installation
 
@@ -46,6 +47,31 @@ $ apk add py3-succulent
 ## Container
 
 [Basic container for succulent](https://github.com/firefly-cpp/succulent-container)
+
+### Configuration
+Follow the instructions in the [configuration](##configuration) section to define the configuration file.
+
+### Installation
+Build the container using Docker:
+```bash
+docker build -t succulent-container .
+```
+
+Alternatively, you can use ``docker-compose``:
+```bash
+docker compose build
+```
+
+### Usage
+Run the container using Docker:
+```bash
+docker run -p 8080:8080 succulent-container
+```
+
+Alternatively, you can use ``docker-compose``:
+```bash
+docker compose up
+```
 
 ## Usage
 
