@@ -4,7 +4,7 @@ import inspect
 import pandas as pd
 
 class Processing:
-    def __init__(self, config, format, unittest=True):
+    def __init__(self, config, format, unittest=False):
         # Validate format
         if format not in ['csv', 'json', 'sqlite']:
             raise ValueError(f'Invalid format: {format}')
