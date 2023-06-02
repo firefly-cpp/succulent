@@ -22,7 +22,7 @@ copyright = '2023, Tadej Lahovnik, Iztok Fister Jr.'
 author = 'Tadej Lahovnik, Iztok Fister Jr.'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.4'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
