@@ -18,7 +18,6 @@ flask = "^2.3.2"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 sphinx = "^7.0.1"
-mock = "^4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

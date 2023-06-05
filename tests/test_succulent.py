@@ -1,5 +1,3 @@
-from mock import patch
-from numpy import nan
 from succulent import __version__
 import unittest
 import os
@@ -7,7 +5,6 @@ import shutil
 import pytest
 import inspect
 from flask import Flask
-from flask.testing import FlaskClient
 from unittest.mock import MagicMock, Mock
 from succulent.processing import Processing
 from succulent.api import SucculentAPI
