@@ -14,7 +14,7 @@ class SucculentAPI:
         self.config = conf.load_config()
 
         # Initialise processing
-        self.processing = Processing(self.config['data'], self.format)
+        self.processing = Processing(config=self.config, format=self.format)
 
         # Initialise Flask
         self.app = Flask(__name__)
