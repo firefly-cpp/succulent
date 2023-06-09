@@ -29,7 +29,7 @@ The current version includes (but is not limited to) the following functions:
 
 - Request URL generation for data collection
 - Data collection from POST requests
-- Storing data in different formats (CSV, JSON, SQLite)
+- Storing data in different formats (CSV, JSON, SQLite, images)
 - Defining boundaries for collected data (min, max)
 
 ## Installation
@@ -95,6 +95,12 @@ data:
   - name: # Measure name
     min: # Minimum value (optional)
     max: # Maximum value (optional)
+```
+
+To collect images, create a file named ``configuration.yml`` in the root directory and define the following:
+```yml
+data:
+  - key: # Key in POST request
 ```
 
 ## License
