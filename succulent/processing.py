@@ -30,9 +30,10 @@ class Processing:
             self.key = config['data'][0]['key']
     
     def parameters(self):
-        parameters = [f'{column}=' for column in self.columns]
-        parameters = '&'.join(parameters)
-        return parameters
+        if self.format != 'image':
+            parameters = [f'{column}=' for column in self.columns]
+            parameters = '&'.join(parameters)
+        return parameters if self.format != 'image' else ''
     
     def boundary(self, value, boundary, column):
         if 'min' in boundary and float(value) < float(boundary['min']):
