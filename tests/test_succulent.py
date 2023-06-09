@@ -10,6 +10,7 @@ from succulent.processing import Processing
 from succulent.api import SucculentAPI
 from succulent.configuration import Configuration
 from datetime import datetime
+from werkzeug.datastructures import FileStorage
 
 @pytest.fixture(autouse=True)
 def teardown(request):
@@ -30,7 +31,7 @@ class TestProcessing(unittest.TestCase):
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
         configuration = Configuration(config_path)
         config = configuration.load_config()
-        self.processing = Processing(config['data'], 'csv', unittest=True)
+        self.processing = Processing(config=config, format='csv', unittest=True)
 
     def test_parameters(self):
         """
@@ -94,6 +95,45 @@ class TestProcessing(unittest.TestCase):
             self.assertEqual(self.processing.df.to_dict(orient='records'), expected_data)
         except PermissionError:
             pytest.skip('Permission denied.')
+
+class TestImageProcessing(unittest.TestCase):
+    """
+    Test case for the Processing class with the image format.
+
+    This test case focuses on image upload, processing, and storage.
+    """
+    def setUp(self):
+        # Load configuration from configuration.yml
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image.yml')
+        configuration = Configuration(config_path)
+        config = configuration.load_config()
+        self.processing = Processing(config=config, format='image', unittest=True)
+    
+    def test_process_image(self):
+        # Temporary file to simulate an image
+        image_data = b'Test image data'
+        with open('temp_image.jpg', 'wb') as f:
+            f.write(image_data)
+
+        # Create a FileStorage object to simulate the uploaded file
+        file = FileStorage(stream=open('temp_image.jpg', 'rb'), filename='test_image.jpg')
+
+        # Send a POST request to the image upload endpoint
+        request = MagicMock()
+        request.files = {'image': file}
+
+        # Process the request
+        self.processing.process(request)
+
+        # Timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+
+        # Assert the file exists in the data directory
+        self.assertTrue(os.path.exists(os.path.join(self.processing.directory, f'{timestamp}_test_image.jpg')))
+
+        # Clean up the temporary file
+        file.close()
+        os.remove('temp_image.jpg')
 
 class TestSucculentAPI(unittest.TestCase):
     """
