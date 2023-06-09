@@ -1,0 +1,8 @@
+data:
+  - name: 'temperature'
+    min: -20
+    max: 50
+  - name: 'humidity'
+  - name: 'light'
+  - name: 'time'
+  - name: 'date'
