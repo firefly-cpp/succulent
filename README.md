@@ -12,6 +12,7 @@
 
 ---
 ![PyPI Version](https://img.shields.io/pypi/v/succulent.svg)
+[![Documentation Status](https://readthedocs.org/projects/succulent/badge/?version=latest)](https://succulent.readthedocs.io/en/latest/?badge=latest)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/succulent.svg)
 [![Downloads](https://pepy.tech/badge/succulent)](https://pepy.tech/project/succulent)
 ![GitHub repo size](https://img.shields.io/github/repo-size/firefly-cpp/succulent?style=flat-square)
@@ -19,6 +20,9 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/firefly-cpp/succulent.svg)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Percentage of issues still open")
+
+* **Documentation:** [https://succulent.readthedocs.io/en/latest/](https://succulent.readthedocs.io/en/latest/)
+* **Tested OS:** Windows, Ubuntu, Fedora, Alpine, Arch, macOS. **However, that does not mean it does not work on others**
 
 ## About
 
