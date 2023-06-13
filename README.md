@@ -17,6 +17,7 @@
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Percentage of issues still open")
 [![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![AUR package](https://img.shields.io/aur/version/python-succulent?color=blue&label=Arch%20Linux&logo=arch-linux)](https://aur.archlinux.org/packages/python-succulent)
 
 * **Documentation:** [https://succulent.readthedocs.io/en/latest/](https://succulent.readthedocs.io/en/latest/)
 * **Tested OS:** Windows, Ubuntu, Fedora, Alpine, Arch, macOS. **However, that does not mean it does not work on others**
@@ -48,6 +49,14 @@ To install succulent on Alpine Linux, please use:
 
 ```sh
 $ apk add py3-succulent
+```
+
+### Arch Linux
+
+To install succulent on Arch Linux, please use an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers):
+
+```sh
+$ yay -Syyu python-succulent
 ```
 
 ## Container
