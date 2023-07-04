@@ -25,9 +25,9 @@
 
 ## About :information_source:
 
-Do you ever find it challenging and tricky to send sensor measurements, data, or GPS positions from embedded devices, microcontrollers, and [smartwatches](https://github.com/firefly-cpp/AST-Monitor) to a central server? :satellite: Setting up the primary data collection scripts can be a time-consuming :hourglass_flowing_sand: process, involving selecting a protocol, framework, API, and testing them out. Moreover, these scripts are often tailored for specific tasks, making them difficult to adapt to different scenarios.
+Do you ever find it challenging and tricky to send sensor measurements :straight_ruler:, data :bar_chart:, or GPS positions from embedded devices :iphone:, microcontrollers, and [smartwatches](https://github.com/firefly-cpp/AST-Monitor) to a central server? :satellite: Setting up the primary data collection scripts can be a time-consuming :hourglass_flowing_sand: process, involving selecting a protocol, framework, API, and testing them out. Moreover, these scripts are often tailored for specific tasks, making them difficult to adapt to different scenarios.
 
-But fear not! Introducing succulent 🌵, a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. This framework draws inspiration from real-world data collection challenges in [smart agriculture](https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32), specifically plant monitoring using ESP32 devices. The main goal behind succulent is to streamline the process of configuring various data parameters and provide a range of useful functions for data transformations. By leveraging succulent, you can set up your entire data collection endpoint within minutes, freeing you from the hassle of dealing with server-side scripts.:rocket::wrench:
+But fear not! Introducing succulent 🌵, a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. This framework draws inspiration from real-world data collection challenges in [smart agriculture](https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32) :brain::herb:, specifically plant monitoring using ESP32 devices. The main goal behind succulent is to streamline the process of configuring various data parameters and provide a range of useful functions for data transformations. By leveraging succulent, you can set up your entire data collection endpoint within minutes, freeing you from the hassle of dealing with server-side scripts.:rocket::wrench:
 
 ## Detailed Insights :mag:
 
@@ -38,7 +38,7 @@ The current version of succulent comes packed with exciting features, including,
 - **Versatile data storage options**, such as CSV, JSON, SQLite, and even images 🗂️📊🖼️
 - **Customizable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
 
-With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches :watch:. So why waste precious time?:clock1030: Dive into the world of succulent and unlock the true potential of your data! 💪
+With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches :watch:. So why waste precious time?:hourglass_flowing_sand: Dive into the world of succulent and unlock the true potential of your data! 💪:chart_with_upwards_trend:
 
 ## Installation
 
