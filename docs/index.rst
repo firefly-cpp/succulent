@@ -1,4 +1,4 @@
-succulent documentation!
+succulent
 ========================================
 
 .. automodule:: succulent
@@ -11,7 +11,7 @@ succulent -- Collect POST requests easily
 
 General outline of the framework
 ---------------------------------
-Sending sensor measurements, data, or GPS positions from embedded devices, microcontrollers, and [smartwatches](https://github.com/firefly-cpp/AST-Monitor) to the central server is sometimes complicated and tricky. Setting up the primary data collection scripts can be time-consuming (selecting a protocol, framework, API, testing it, etc.). Usually, scripts are written for a specific task; thus, they are not easily adaptive to other tasks. succulent is a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. The inspiration for the framework comes from the practical data collection challenges in [smart agriculture](https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32). The main idea of the framework was to speed up the process of configuring different collected parameters and providing several useful functions for data transformations. The framework allows users to configure the whole endpoint for data collection in several minutes and thus not spend time on server-side scripts.
+Sending sensor measurements, data, or GPS positions from embedded devices, microcontrollers, and `smartwatches <https://github.com/firefly-cpp/AST-Monitor>`_ to the central server is sometimes complicated and tricky. Setting up the primary data collection scripts can be time-consuming (selecting a protocol, framework, API, testing it, etc.). Usually, scripts are written for a specific task; thus, they are not easily adaptive to other tasks. succulent is a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. The inspiration for the framework comes from the practical data collection challenges in `smart agriculture <https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32>`_. The main idea of the framework was to speed up the process of configuring different collected parameters and providing several useful functions for data transformations. The framework allows users to configure the whole endpoint for data collection in several minutes and thus not spend time on server-side scripts.
 
 Detailed insights
 -----------------------
@@ -21,3 +21,48 @@ The current version includes (but is not limited to) the following functions:
 - Data collection from POST requests
 - Storing data in different formats (CSV, JSON, SQLite, images)
 - Defining boundaries for collected data (min, max)
+
+Documentation
+=============
+
+The documentation is organized into the following sections:
+
+* :ref:`user`
+* :ref:`dev`
+* :ref:`api`
+* :ref:`about`
+
+.. _user:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User documentation
+
+   getting_started
+
+.. _dev:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer documentation
+
+   installation
+   testing
+   documentation
+
+.. _api:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/index
+
+.. _about:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: About
+
+   license
+   code_of_conduct

@@ -4,20 +4,42 @@ import inspect
 import pandas as pd
 from datetime import datetime
 
+
 class Processing:
+    """Class for processing and storing data.
+
+    Args:
+        format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        config (dict): The configuration settings for data processing.
+        unittest (bool, optional): If True, the class is being used for unit testing. Default is False.
+
+    Attributes:
+        directory (str): The path to storage location.
+        format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        columns (list): List of feature names in the data.
+        boundaries (list): List of minimum and maximum boundaries for each feature in the data.
+        df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
+        key (str): The key to retrieve the image file from the request (for 'image' format).
+
+    Raises:
+        ValueError: Invalid format is provided.
+    """
+
     def __init__(self, format, config, unittest=False):
         # Validate format
         if format not in ['csv', 'json', 'sqlite', 'image']:
             raise ValueError(f'Invalid format: {format}')
-        
+
         # Initialise attributes
         index = 1 if unittest else 2
-        self.directory = os.path.join(os.path.dirname(os.path.abspath(inspect.stack()[index].filename)), 'data')
+        self.directory = os.path.join(os.path.dirname(
+            os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
 
         if format in ['csv', 'json', 'sqlite']:
-            self.columns = [configuration['name'] for configuration in config['data']]
-            self.boundaries = [{ 
+            self.columns = [configuration['name']
+                            for configuration in config['data']]
+            self.boundaries = [{
                 configuration['name']: {
                     key: configuration[key]
                     for key in ['min', 'max']
@@ -28,21 +50,49 @@ class Processing:
 
         if format == 'image':
             self.key = config['data'][0]['key']
-    
+
     def parameters(self):
+        """Generate URL parameters based on data columns.
+
+        Returns:
+            str: URL parameters as a string.
+        """
         if self.format != 'image':
             parameters = [f'{column}=' for column in self.columns]
             parameters = '&'.join(parameters)
         return parameters if self.format != 'image' else ''
-    
+
     def boundary(self, value, boundary, column):
+        """Check if the value is within the specified boundary for a column.
+
+        Args:
+            value (float): The value to check.
+            boundary (dict): A dictionary containing 'min' and/or 'max' boundaries for the column.
+            column (str): The name of the column being checked.
+
+        Raises:
+            ValueError: Value is outside the specified boundary.
+
+        Returns:
+            float: The original value (within the boundary).
+        """
         if 'min' in boundary and float(value) < float(boundary['min']):
-            raise ValueError(f'{column} ({value}) is lower than the specified minimum ({boundary["min"]}).')
+            raise ValueError(
+                f'{column} ({value}) is lower than the specified minimum ({boundary["min"]}).')
         if 'max' in boundary and float(value) > float(boundary['max']):
-            raise ValueError(f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
+            raise ValueError(
+                f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
         return value
-        
+
     def process(self, req):
+        """Process the incoming request and store the data accordingly.
+
+        Args:
+            req (Request): The incoming request object.
+
+        Returns:
+            None
+        """
         # Directory preparation
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
@@ -80,8 +130,10 @@ class Processing:
 
                 # Boundary check
                 if column in [list(boundaries.keys())[0] for boundaries in self.boundaries]:
-                    index = [list(boundaries.keys())[0] for boundaries in self.boundaries].index(column)
-                    data[column] = self.boundary(value, self.boundaries[index][column], column)
+                    index = [list(boundaries.keys())[0]
+                             for boundaries in self.boundaries].index(column)
+                    data[column] = self.boundary(
+                        value, self.boundaries[index][column], column)
                 else:
                     data[column] = value
 
@@ -89,7 +141,8 @@ class Processing:
             data = pd.Series(data, index=self.columns)
 
             # Merge data
-            self.df = pd.concat([self.df, data.to_frame().T], ignore_index=True)
+            self.df = pd.concat(
+                [self.df, data.to_frame().T], ignore_index=True)
 
             # Store data to device
             if self.format == 'csv':
@@ -100,7 +153,7 @@ class Processing:
                 conn = sqlite3.connect(path)
                 self.df.to_sql('data', conn, if_exists='replace', index=False)
                 conn.close()
-        
+
         if self.format == 'image':
             # Retrieve image from request
             file = req.files[self.key]
@@ -109,4 +162,5 @@ class Processing:
             timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
 
             # Store image to device
-            file.save(os.path.join(self.directory, f'{timestamp}_{file.filename}'))
+            file.save(os.path.join(self.directory,
+                      f'{timestamp}_{file.filename}'))
