@@ -8,18 +8,18 @@ class SucculentAPI:
     """Succulent API server.
 
     Args:
-            host (str): The host address to run the API server.
-            port (int): The port number to run the API server.
-            config (str): Path to the configuration file.
-            format (str, optional): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        host (str): The host address to run the API server.
+        port (int): The port number to run the API server.
+        config (str): Path to the configuration file.
+        format (str, optional): The format of the data ('csv', 'json', 'sqlite', or 'image').
 
-    Attributes:
-            host (str): The host address to run the API server.
-            port (int): The port number to run the API server.
-            config (dict): Configuration file.
-            format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
-            app (Flask): Flask application.
-            processing (Processing): Instance of the Processing class.
+Attributes:
+        host (str): The host address to run the API server.
+        port (int): The port number to run the API server.
+        config (dict): Configuration file.
+        format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        app (Flask): Flask application.
+        processing (Processing): Instance of the Processing class.
     """
 
     def __init__(self, host, port, config, format='csv'):

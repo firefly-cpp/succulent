@@ -1,3 +1,6 @@
 Sphinx
 sphinx-rtd-theme
 sphinxcontrib-bibtex
+pandas
+pyyaml
+flask

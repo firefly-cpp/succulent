@@ -7,10 +7,10 @@ class Configuration:
     """Class for loading configuration settings from a YAML file.
 
     Args:
-            path (str): The path to the YAML configuration file.
+        path (str): The path to the YAML configuration file.
 
     Attributes:
-            path (str): The path to the YAML configuration file.
+        path (str): The path to the YAML configuration file.
     """
 
     def __init__(self, path):
