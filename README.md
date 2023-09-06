@@ -10,7 +10,7 @@
 ![PyPI Version](https://img.shields.io/pypi/v/succulent.svg)
 [![Documentation Status](https://readthedocs.org/projects/succulent/badge/?version=latest)](https://succulent.readthedocs.io/en/latest/?badge=latest)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/succulent.svg)
-[![Downloads](https://pepy.tech/badge/succulent)](https://pepy.tech/project/succulent)
+[![Downloads](https://static.pepy.tech/badge/succulent)](https://pepy.tech/project/succulent)
 ![GitHub repo size](https://img.shields.io/github/repo-size/firefly-cpp/succulent?style=flat-square)
 [![GitHub license](https://img.shields.io/github/license/firefly-cpp/succulent.svg)](https://github.com/firefly-cpp/succulent/blob/master/LICENSE)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/firefly-cpp/succulent.svg)
