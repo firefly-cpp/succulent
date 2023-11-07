@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.5](https://github.com/firefly-cpp/succulent/tree/0.2.5) (2023-08-17)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.4...0.2.5)
+
+**Fixed bugs:**
+
+- API & Processing [\#30](https://github.com/firefly-cpp/succulent/issues/30)
+
+**Closed issues:**
+
+- Provide API documentation [\#25](https://github.com/firefly-cpp/succulent/issues/25)
+
+**Merged pull requests:**
+
+- docs: add lahovniktadej as a contributor for tutorial [\#29](https://github.com/firefly-cpp/succulent/pull/29) ([allcontributors[bot]](https://github.com/apps/allcontributors))
+
 ## [0.2.4](https://github.com/firefly-cpp/succulent/tree/0.2.4) (2023-07-08)
 
 [Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.3...0.2.4)
