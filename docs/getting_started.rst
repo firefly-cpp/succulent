@@ -34,7 +34,7 @@ To collect images, create a file named ``configuration.yml`` in the root directo
     data:
         - key: # Key in POST request
 
-To access the URL for data collection, send a GET request or navigate to ``http://localhost:8080/measure``.
+To access the URL for data collection, send a GET request or navigate to http://localhost:8080/measure.
 
 Example
 ~~~~~~~

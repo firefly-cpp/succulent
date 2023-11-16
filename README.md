@@ -130,7 +130,7 @@ data:
   - key: # Key in POST request
 ```
 
-To access the URL for data collection, send a GET request or navigate to ``http://localhost:8080/measure``.
+To access the URL for data collection, send a GET request or navigate to [http://localhost:8080/measure](http://localhost:8080/measure).
 
 ## License
 
