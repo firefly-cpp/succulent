@@ -130,6 +130,8 @@ data:
   - key: # Key in POST request
 ```
 
+To access the URL for data collection, send a GET request or navigate to ``http://localhost:8080/measure``.
+
 ## License
 
 This package is distributed under the MIT License. This license can be found online at <http://www.opensource.org/licenses/MIT>.
