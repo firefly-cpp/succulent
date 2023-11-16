@@ -23,7 +23,13 @@ class Configuration:
 
         Returns:
             dict: The loaded configuration settings as a dictionary.
+
+        Raises:
+            FileNotFoundError: The specified file does not exist.
         """
+        if not os.path.isfile(self.path):
+            raise FileNotFoundError(f'File not found: {self.path}')
+
         with open(self.path, 'r') as yml:
             config = yaml.safe_load(yml)
             return config
