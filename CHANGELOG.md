@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6](https://github.com/firefly-cpp/succulent/tree/0.2.6) (2023-11-16)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.5...0.2.6)
+
+**Closed issues:**
+
+- Check whether configuration file exists [\#31](https://github.com/firefly-cpp/succulent/issues/31)
+
 ## [0.2.5](https://github.com/firefly-cpp/succulent/tree/0.2.5) (2023-08-17)
 
 [Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.4...0.2.5)
