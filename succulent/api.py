@@ -13,7 +13,7 @@ class SucculentAPI:
         config (str): Path to the configuration file.
         format (str, optional): The format of the data ('csv', 'json', 'sqlite', or 'image').
 
-Attributes:
+    Attributes:
         host (str): The host address to run the API server.
         port (int): The port number to run the API server.
         config (dict): Configuration file.
@@ -22,7 +22,7 @@ Attributes:
         processing (Processing): Instance of the Processing class.
     """
 
-    def __init__(self, host, port, config, format='csv'):
+    def __init__(self, config, host='0.0.0.0', port=8080, format='csv'):
         self.host = host
         self.port = port
         self.format = format
