@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, url_for
 from succulent.configuration import Configuration
 from succulent.processing import Processing
 from datetime import datetime
@@ -35,10 +35,30 @@ class SucculentAPI:
         self.processing = Processing(config=self.config, format=self.format)
 
         # Initialise Flask
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, static_url_path='/succulent/static')
+        self.app.add_url_rule('/', 'index', self.index, methods=['GET'])
         self.app.add_url_rule('/measure', 'url', self.url, methods=['GET'])
         self.app.add_url_rule('/measure', 'measure',
                               self.measure, methods=['POST'])
+
+    def index(self):
+        """Generate index HTML page with information about the API.
+
+        Returns:
+            Response: HTML response with the index page.
+        """
+        img_url = url_for('static', filename='logo.png')
+
+        return f"""
+        <div style="font-family: Arial;">
+            <center>
+                <h1>succulent - Collect POST requests easily</h1>
+                <img src="{img_url}" alt="succulent" style="width:500px;">
+                <p>The service is currently up and running.</p>
+                <p><i>For more information, see the <a href='https://succulent.readthedocs.io/en/latest' target='_blank'>documentation</a>.</i></p>
+            </center>
+        </div>
+        """
 
     def url(self):
         """Generate URL with parameters for measurements.
