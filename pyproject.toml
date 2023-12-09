@@ -7,6 +7,7 @@ authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>", "Tadej Lahovnik <lahov
 keywords = ['data collection', 'data science', 'ESP32', 'sensor measurements', 'smart agriculture', 'smartwatch']
 homepage = "https://github.com/firefly-cpp/succulent"
 repository = "https://github.com/firefly-cpp/succulent"
+documentation = "https://succulent.readthedocs.io/en/latest/"
 readme = "README.md"
 
 [tool.poetry.dependencies]
