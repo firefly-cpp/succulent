@@ -41,7 +41,7 @@ The current version of succulent comes packed with exciting features, including,
 - **Versatile data storage options**, such as CSV, JSON, SQLite, and even images 🗂️📊🖼️
 - **Customizable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
 
-With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches ⌚. So why waste precious time? ⏳ Dive into the world of succulent and unlock the true potential of your data! 💪📈
+With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches. ⌚ So why waste precious time? ⏳ Dive into the world of succulent and unlock the true potential of your data! 💪📈
 
 ## Installation
 
@@ -139,7 +139,18 @@ To access data via the Succulent API, enable the results in the configuration fi
 results:
   enabled: true # false by default
 ```
+
 To access the collected data, send a GET request or navigate to [http://localhost:8080/data](http://localhost:8080/data).
+
+### Data export
+To export the data, enable the export in the configuration file:
+```yml
+results:
+  export:
+    enabled: true # false by default
+```
+
+To export the data, send a GET request or navigate to [http://localhost:8080/export](http://localhost:8080/export).
 
 
 ## License
