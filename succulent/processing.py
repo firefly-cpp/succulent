@@ -19,6 +19,7 @@ class Processing:
         columns (list): List of feature names in the data.
         boundaries (list): List of minimum and maximum boundaries for each feature in the data.
         enable_results (bool): If True, the results are enabled.
+        enable_export (bool): If True, the export is enabled.
         df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
         key (str): The key to retrieve the image file from the request (for 'image' format).
 
@@ -37,6 +38,7 @@ class Processing:
             os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
         self.enable_results = False
+        self.enable_export = False
 
         if format in ['csv', 'json', 'sqlite']:
             self.columns = [configuration['name']
@@ -50,8 +52,11 @@ class Processing:
             } for configuration in config['data'] if configuration.get('min') is not None or configuration.get('max') is not None]
 
             if 'results' in config:
-                if config['results'][0].get('enable'):
-                    self.enable_results = config['results'][0].get('enable')
+                for results in config['results']:
+                    if 'enable' in results:
+                        self.enable_results = results['enable']
+                    if 'export' in results:
+                        self.enable_export = results['export']
 
             self.df = pd.DataFrame()  # Initialize df attribute
 
@@ -205,6 +210,47 @@ class Processing:
                 # Send response
                 return {'valid': True, 'data': self.df}
             else:
+                # Unsupported file type
                 return {'valid': False, 'message': f'Results are not supported for the chosen file type ({self.format}).'}
         else:
+            # Results are not enabled in configuration
             return {'valid': False, 'message': 'Results are not enabled in your current configuration.'}
+
+    def export(self):
+        """Export the stored data.
+
+        Returns:
+            dict: The exported data as a dictionary.
+        """
+        if self.enable_export:
+            if self.format in ['csv', 'json', 'sqlite']:
+                # Define paths
+                path = os.path.join(
+                    self.directory, f'data.{self.format}'
+                )
+
+                # Load existing data
+                if os.path.exists(path):
+                    if self.format == 'csv':
+                        self.df = pd.read_csv(path, sep=',')
+                    elif self.format == 'json':
+                        self.df = pd.read_json(path, orient='records')
+                    elif self.format == 'sqlite':
+                        conn = sqlite3.connect(path)
+                        self.df = pd.read_sql_query('SELECT * FROM data', conn)
+                        conn.close()
+                    else:
+                        raise ValueError(f'Invalid file type: {self.format}')
+
+                # Check if data is available
+                if self.df.empty:
+                    return {'valid': False, 'message': 'No data available.'}
+
+                # Send response
+                return {'valid': True, 'data': self.df}
+            else:
+                # Unsupported file type
+                return {'valid': False, 'message': f'Exporting is not supported for the chosen file type ({self.format}).'}
+        else:
+            # Results are not enabled in configuration
+            return {'valid': False, 'message': 'Exporting is not enabled in your current configuration.'}
