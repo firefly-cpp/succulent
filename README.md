@@ -116,6 +116,7 @@ api.start()
 ```
 
 ## Configuration
+### Data collection
 In the root directory, create a file named `configuration.yml` and define the following:
 ```yml
 data:
@@ -131,6 +132,15 @@ data:
 ```
 
 To access the URL for data collection, send a GET request or navigate to [http://localhost:8080/measure](http://localhost:8080/measure).
+
+### Data access
+To access data via the Succulent API, enable the results in the configuration file:
+```yml
+results:
+  enabled: true # false by default
+```
+To access the collected data, send a GET request or navigate to [http://localhost:8080/data](http://localhost:8080/data).
+
 
 ## License
 
