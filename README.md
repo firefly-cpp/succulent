@@ -41,7 +41,7 @@ The current version of succulent comes packed with exciting features, including,
 - **Versatile data storage options**, such as CSV, JSON, SQLite, and even images 🗂️📊🖼️
 - **Customizable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
 
-With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches :watch:. So why waste precious time?:hourglass_flowing_sand: Dive into the world of succulent and unlock the true potential of your data! 💪:chart_with_upwards_trend:
+With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches ⌚. So why waste precious time? ⏳ Dive into the world of succulent and unlock the true potential of your data! 💪📈
 
 ## Installation
 
