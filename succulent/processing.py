@@ -18,6 +18,7 @@ class Processing:
         format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
         columns (list): List of feature names in the data.
         boundaries (list): List of minimum and maximum boundaries for each feature in the data.
+        enable_results (bool): If True, the results are enabled.
         df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
         key (str): The key to retrieve the image file from the request (for 'image' format).
 
@@ -35,6 +36,7 @@ class Processing:
         self.directory = os.path.join(os.path.dirname(
             os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
+        self.enable_results = False
 
         if format in ['csv', 'json', 'sqlite']:
             self.columns = [configuration['name']
@@ -46,7 +48,12 @@ class Processing:
                     if key in configuration
                 }
             } for configuration in config['data'] if configuration.get('min') is not None or configuration.get('max') is not None]
-            self.df = None  # Initialize df attribute
+
+            if 'results' in config:
+                if config['results'][0].get('enable'):
+                    self.enable_results = config['results'][0].get('enable')
+
+            self.df = pd.DataFrame()  # Initialize df attribute
 
         if format == 'image':
             self.key = config['data'][0]['key']
@@ -164,3 +171,40 @@ class Processing:
             # Store image to device
             file.save(os.path.join(self.directory,
                       f'{timestamp}_{file.filename}'))
+
+    def data(self):
+        """Generate results based on the stored data.
+
+        Returns:
+            dict: The results as a dictionary.
+        """
+        if self.enable_results:
+            if self.format in ['csv', 'json', 'sqlite']:
+                # Define paths
+                path = os.path.join(
+                    self.directory, f'data.{self.format}'
+                )
+
+                # Load existing data
+                if os.path.exists(path):
+                    if self.format == 'csv':
+                        self.df = pd.read_csv(path, sep=',')
+                    elif self.format == 'json':
+                        self.df = pd.read_json(path, orient='records')
+                    elif self.format == 'sqlite':
+                        conn = sqlite3.connect(path)
+                        self.df = pd.read_sql_query('SELECT * FROM data', conn)
+                        conn.close()
+                    else:
+                        raise ValueError(f'Invalid file type: {self.format}')
+
+                # Check if data is available
+                if self.df.empty:
+                    return {'valid': False, 'message': 'No data available.'}
+
+                # Send response
+                return {'valid': True, 'data': self.df}
+            else:
+                return {'valid': False, 'message': f'Results are not supported for the chosen file type ({self.format}).'}
+        else:
+            return {'valid': False, 'message': 'Results are not enabled in your current configuration.'}

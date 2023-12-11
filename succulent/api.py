@@ -40,6 +40,8 @@ class SucculentAPI:
         self.app.add_url_rule('/measure', 'url', self.url, methods=['GET'])
         self.app.add_url_rule('/measure', 'measure',
                               self.measure, methods=['POST'])
+        self.app.add_url_rule('/data', 'data',
+                              self.data, methods=['GET'])
 
     def index(self):
         """Generate index HTML page with information about the API.
@@ -92,6 +94,13 @@ class SucculentAPI:
 
         # Send response
         return jsonify({'message': 'Data stored', 'timestamp': timestamp}), 200
+
+    def data(self):
+        data = self.processing.data()
+        if data['valid'] == False:
+            return jsonify({'message': data['message']}), 400
+
+        return jsonify({'data': data['data'].to_dict(orient='records')}), 200
 
     def start(self):
         """Start the Flask application on the specified host and port.
