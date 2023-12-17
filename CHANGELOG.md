@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/firefly-cpp/succulent/tree/0.3.0) (2023-12-11)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.7...0.3.0)
+
+**Closed issues:**
+
+- Export collected data online [\#37](https://github.com/firefly-cpp/succulent/issues/37)
+- Show results [\#35](https://github.com/firefly-cpp/succulent/issues/35)
+- Several emojis in README are not shown [\#34](https://github.com/firefly-cpp/succulent/issues/34)
+- Show a hello and logo from index page when succulent deployed [\#33](https://github.com/firefly-cpp/succulent/issues/33)
+
+## [0.2.7](https://github.com/firefly-cpp/succulent/tree/0.2.7) (2023-12-08)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.6...0.2.7)
+
+**Closed issues:**
+
+- host and port should be optional [\#32](https://github.com/firefly-cpp/succulent/issues/32)
+
 ## [0.2.6](https://github.com/firefly-cpp/succulent/tree/0.2.6) (2023-11-16)
 
 [Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.2.5...0.2.6)
