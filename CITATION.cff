@@ -1,0 +1,14 @@
+abstract: '<p><strong>Full Changelog</strong>: https://github.com/firefly-cpp/succulent/compare/0.3.0...0.3.1</p>'
+authors:
+- affiliation: UM FERI
+  family-names: Tadej Lahovnik
+- family-names: Iztok Fister Jr.
+cff-version: 1.2.0
+date-released: '2023-12-18'
+doi: 10.5281/zenodo.10402365
+license:
+- cc-by-4.0
+repository-code: https://github.com/firefly-cpp/succulent/tree/0.3.1
+title: 'firefly-cpp/succulent: 0.3.1'
+type: software
+version: 0.3.1
