@@ -20,6 +20,7 @@
 [![AUR package](https://img.shields.io/aur/version/python-succulent?color=blue&label=Arch%20Linux&logo=arch-linux)](https://aur.archlinux.org/packages/python-succulent)
 [![Fedora package](https://img.shields.io/fedora/v/python3-succulent?color=blue&label=Fedora%20Linux&logo=fedora)](https://src.fedoraproject.org/rpms/python-succulent)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:succulent.svg)](https://repology.org/project/python:succulent/versions)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10402365.svg)](https://doi.org/10.5281/zenodo.10402365)
 
 * **Free software:** MIT license
 * **Documentation:** [https://succulent.readthedocs.io/en/latest/](https://succulent.readthedocs.io/en/latest/)
