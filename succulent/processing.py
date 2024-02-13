@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import inspect
+import xmltodict
 import pandas as pd
 from datetime import datetime
 
@@ -9,13 +10,13 @@ class Processing:
     """Class for processing and storing data.
 
     Args:
-        format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        format (str): The format of the data ('csv', 'json', 'sqlite', 'image', or 'xml').
         config (dict): The configuration settings for data processing.
         unittest (bool, optional): If True, the class is being used for unit testing. Default is False.
 
     Attributes:
         directory (str): The path to storage location.
-        format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
+        format (str): The format of the data ('csv', 'json', 'sqlite', 'image', or 'xml').
         columns (list): List of feature names in the data.
         boundaries (list): List of minimum and maximum boundaries for each feature in the data.
         enable_results (bool): If True, the results are enabled.
@@ -29,7 +30,7 @@ class Processing:
 
     def __init__(self, format, config, unittest=False):
         # Validate format
-        if format not in ['csv', 'json', 'sqlite', 'image']:
+        if format not in ['csv', 'json', 'sqlite', 'image', 'xml']:
             raise ValueError(f'Invalid format: {format}')
 
         # Initialise attributes
@@ -40,7 +41,7 @@ class Processing:
         self.enable_results = False
         self.enable_export = False
 
-        if format in ['csv', 'json', 'sqlite']:
+        if format in ['csv', 'json', 'sqlite', 'xml']:
             self.columns = [configuration['name']
                             for configuration in config['data']]
             self.boundaries = [{
@@ -109,7 +110,7 @@ class Processing:
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
-        if self.format in ['csv', 'json', 'sqlite']:
+        if self.format in ['csv', 'json', 'sqlite', 'xml']:
             # Define paths
             path = os.path.join(
                 self.directory, f'data.{self.format}'
@@ -125,6 +126,8 @@ class Processing:
                     conn = sqlite3.connect(path)
                     self.df = pd.read_sql_query('SELECT * FROM data', conn)
                     conn.close()
+                elif self.format == 'xml':
+                    self.df = pd.read_xml(path)
                 else:
                     raise ValueError(f'Invalid file type: {self.format}')
             # Initialise new data
@@ -137,6 +140,10 @@ class Processing:
                 # Request type
                 if req.is_json:
                     value = req.json[column] if column in req.json else None
+                elif self.format == 'xml':
+                    xml = xmltodict.parse(req.data)
+                    data = xml[list(xml.keys())[0]]
+                    value = xml[list(xml.keys())[0]][column] if column in xml[list(xml.keys())[0]].keys() else None
                 else:
                     value = req.args.get(column, default=None)
 
@@ -161,6 +168,8 @@ class Processing:
                 self.df.to_csv(path, sep=',', index=False)
             elif self.format == 'json':
                 self.df.to_json(path, orient='records', indent=4)
+            elif self.format == 'xml':
+                self.df.to_xml(path, index=False)
             elif self.format == 'sqlite':
                 conn = sqlite3.connect(path)
                 self.df.to_sql('data', conn, if_exists='replace', index=False)
