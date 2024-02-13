@@ -43,6 +43,11 @@ class TestProcessing(unittest.TestCase):
         self.assertEqual(self.processing.parameters(), expected_parameters)
 
     def test_process_json(self):
+        """
+        Test the process() method of the Processing class with JSON data.
+        
+        This test ensures that the process() method correctly merges the JSON data with the existing DataFrame.
+        """
         try:
             # Mock the request object
             request = MagicMock()
@@ -54,6 +59,39 @@ class TestProcessing(unittest.TestCase):
                 'time': '10:30',
                 'date': '2022-01-01'
             }
+
+            # Process the request
+            self.processing.process(request)
+
+            # Verify the data is merged correctly
+            expected_data = [
+                {
+                    'temperature': '25',
+                    'humidity': '50',
+                    'light': 'high',
+                    'time': '10:30',
+                    'date': '2022-01-01'
+                }
+            ]
+            actual_data = self.processing.df.to_dict(orient='records')
+            self.assertEqual(actual_data, expected_data)
+        except PermissionError:
+            pytest.skip('Permission denied.')
+
+    def test_process_xml(self):
+        """
+        Test the process() method of the Processing class with XML data.
+        
+        This test ensures that the process() method correctly merges the XML data with the existing DataFrame.
+        """
+        try:
+            # Mock the request object
+            request = MagicMock()
+            request.is_json = False
+            request.data = b'<data><temperature>25</temperature><humidity>50</humidity><light>high</light><time>10:30</time><date>2022-01-01</date></data>'
+
+            # Format
+            self.processing.format = 'xml'
 
             # Process the request
             self.processing.process(request)
