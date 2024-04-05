@@ -19,7 +19,7 @@ The current version includes (but is not limited to) the following functions:
 
 - Request URL generation for data collection
 - Data collection from POST requests
-- Storing data in different formats (CSV, JSON, SQLite, images)
+- Storing data in different formats (CSV, JSON, SQLite, XML, images)
 - Defining boundaries for collected data (min, max)
 
 Documentation

@@ -33,17 +33,22 @@ All of the project's dependencies should be installed and the project ready for 
 
 ### Dependencies
 
-| Package  | Version | Platform |
-|----------|:-------:|:--------:|
-| pandas   | ^1.26.1 |   All    |
-| pyyaml   | ^6.0    |   All    |
-| flask    | ^2.3.2  |   All    |
+| Package   | Version | Platform |
+|-----------|:-------:|:--------:|
+| pandas    | ^2.0.1  |   All    |
+| pyyaml    | ^6.0    |   All    |
+| flask     | ^2.3.2  |   All    |
+| xmltodict | ^0.13.0 |   All    |
+| lxml      | ^5.1.0  |   All    |
 
 #### Development dependencies
 
-| Package | Version  | Platform |
-|---------|:--------:|:--------:|
-| pytest  | ^7.4.3   |   Any    |
+| Package              | Version  | Platform |
+|----------------------|:--------:|:--------:|
+| pytest               | ^6.2     |   Any    |
+| sphinx               | ^4.4.0   |   Any    |
+| sphinx-rtd-theme     | ^1.0.0   |   Any    |
+| sphinxcontrib-bibtex | ^2.4.1   |   Any    |
 
 ## Development Tasks
 
