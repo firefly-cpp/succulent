@@ -79,18 +79,46 @@ $ dnf install python3-succulent
 
 ## Container
 
-[Basic container for succulent](https://github.com/firefly-cpp/succulent-container)
+File: docker-compose.yml
 
-### Configuration
-Follow the instructions in the [configuration](##configuration) section to define the configuration file.
+```sh
+version: '3.8'
 
-### Installation
-Build the container using Docker:
-```bash
-docker build -t succulent-container .
+services:
+  app:
+    image: codeberg.org/firefly-cpp/succulent:v2
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./run.py:/succulent-app/run.py
+      - ./configuration.yml:/succulent-app/configuration.yml
+    environment:
+      - GUNICORN_WORKERS=2
+    command: gunicorn -b 0.0.0.0:8080 -w 2 -t 120 run:app
+```
+File: configuration.yml (example)
+
+```sh
+data:
+  - name: 'temperature'
+  - name: 'humidity'
+  - name: 'light'
+  - name: 'time'
+  - name: 'date'
 ```
 
-Alternatively, you can use ``docker-compose``:
+```bash
+File: run.py
+
+from succulent.api import SucculentAPI
+
+api = SucculentAPI(config='configuration.yml', format='csv')
+
+# Flask app instance, called by gunicorn
+app = api.app
+```
+
+Build and run:
 ```bash
 docker compose build
 ```
