@@ -107,9 +107,8 @@ data:
   - name: 'date'
 ```
 
-```bash
 File: run.py
-
+```bash
 from succulent.api import SucculentAPI
 
 api = SucculentAPI(config='configuration.yml', format='csv')
