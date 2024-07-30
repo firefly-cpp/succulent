@@ -165,7 +165,7 @@ To access the URL for data collection, send a GET request or navigate to [http:/
 To access data via the Succulent API, enable the results in the configuration file:
 ```yml
 results:
-  enabled: true # false by default
+  - enable: true # false by default
 ```
 
 To access the collected data, send a GET request or navigate to [http://localhost:8080/data](http://localhost:8080/data).
