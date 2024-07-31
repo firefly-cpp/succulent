@@ -1,61 +1,99 @@
----
 <p align="center">
   <img alt="logo" width="300" src=".github/images/logo.png">
 </p>
 
+<h1 align="center">
+succulent - Collect POST requests easily
+</h1>
 
-# succulent - Collect POST requests easily
+<p align="center">
+  <img alt="PyPI Version" src="https://img.shields.io/pypi/v/succulent.svg">
+  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/succulent.svg">
+  <a href="https://aur.archlinux.org/packages/python-succulent">
+    <img alt="AUR package" src="https://img.shields.io/aur/version/python-succulent?color=blue&label=Arch%20Linux&logo=arch-linux">
+  </a>
+  <a href="https://src.fedoraproject.org/rpms/python-succulent">
+    <img alt="Fedora package" src="https://img.shields.io/fedora/v/python3-succulent?color=blue&label=Fedora%20Linux&logo=fedora">
+  </a>
+  <a href="https://pepy.tech/project/succulent">
+    <img alt="Downloads" src="https://static.pepy.tech/badge/succulent">
+  </a>
+  <a href="https://repology.org/project/python:succulent/versions">
+    <img alt="Packaging status" src="https://repology.org/badge/tiny-repos/python:succulent.svg">
+  </a>
+  <a href="https://github.com/firefly-cpp/succulent/blob/master/LICENSE">
+    <img alt="GitHub license" src="https://img.shields.io/github/license/firefly-cpp/succulent.svg">
+  </a>
+  <a href="https://github.com/firefly-cpp/succulent/actions/workflows/test.yml">
+    <img alt="Build" src="https://github.com/firefly-cpp/succulent/actions/workflows/test.yml/badge.svg">
+  </a>
+  <a href="https://succulent.readthedocs.io/en/latest/?badge=latest">
+    <img alt="Documentation status" src="https://readthedocs.org/projects/succulent/badge/?version=latest">
+  </a>
+</p>
 
----
-![PyPI Version](https://img.shields.io/pypi/v/succulent.svg)
-[![Documentation Status](https://readthedocs.org/projects/succulent/badge/?version=latest)](https://succulent.readthedocs.io/en/latest/?badge=latest)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/succulent.svg)
-[![Downloads](https://static.pepy.tech/badge/succulent)](https://pepy.tech/project/succulent)
-![GitHub repo size](https://img.shields.io/github/repo-size/firefly-cpp/succulent?style=flat-square)
-[![GitHub license](https://img.shields.io/github/license/firefly-cpp/succulent.svg)](https://github.com/firefly-cpp/succulent/blob/master/LICENSE)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/firefly-cpp/succulent.svg)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/firefly-cpp/succulent.svg)](http://isitmaintained.com/project/firefly-cpp/succulent "Percentage of issues still open")
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
-[![AUR package](https://img.shields.io/aur/version/python-succulent?color=blue&label=Arch%20Linux&logo=arch-linux)](https://aur.archlinux.org/packages/python-succulent)
-[![Fedora package](https://img.shields.io/fedora/v/python3-succulent?color=blue&label=Fedora%20Linux&logo=fedora)](https://src.fedoraproject.org/rpms/python-succulent)
-[![Packaging status](https://repology.org/badge/tiny-repos/python:succulent.svg)](https://repology.org/project/python:succulent/versions)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10402365.svg)](https://doi.org/10.5281/zenodo.10402365)
+<p align="center">
+  <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/firefly-cpp/succulent">
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/firefly-cpp/succulent.svg">
+  <a href="http://isitmaintained.com/project/firefly-cpp/succulent">
+    <img alt="Average time to resolve an issue" src="http://isitmaintained.com/badge/resolution/firefly-cpp/succulent.svg">
+  </a>
+  <a href="http://isitmaintained.com/project/firefly-cpp/succulent">
+    <img alt="Percentage of issues still open" src="http://isitmaintained.com/badge/open/firefly-cpp/succulent.svg">
+  </a>
+  <a href="#-contributors">
+    <img alt="All Contributors" src="https://img.shields.io/badge/all_contributors-5-orange.svg">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://doi.org/10.5281/zenodo.10402365">
+    <img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.10402365.svg">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#-detailed-insights">🔍 Detailed Insights</a> •
+  <a href="#-installation">📦 Installation</a> •
+  <a href="#-container">🐳 Container</a> •
+  <a href="#-usage">🚀 Usage</a> •
+  <a href="#-configuration">🔧 Configuration</a> •
+  <a href="#-license">🔑 License</a> •
+  <a href="#-contributors">🫂 Contributors</a>
+</p>
+
+Do you ever find it challenging and tricky to send sensor measurements 📏, data 📊, or GPS positions from embedded devices 📱, microcontrollers, and [smartwatches](https://github.com/firefly-cpp/AST-Monitor) to a central server? 📡 Setting up the primary data collection scripts can be a time-consuming ⏳ process, involving selecting a protocol, framework, API, and testing them out. Moreover, these scripts are often tailored for specific tasks, making them difficult to adapt to different scenarios.
+
+But fear not! Introducing succulent 🌵, a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. This framework draws inspiration from real-world data collection challenges in [smart agriculture](https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32) 🧠🌿, specifically plant monitoring using ESP32 devices. The main goal behind succulent is to streamline the process of configuring various data parameters and provide a range of useful functions for data transformations. By leveraging succulent, you can set up your entire data collection endpoint within minutes, freeing you from the hassle of dealing with server-side scripts. 🚀🔧
 
 * **Free software:** MIT license
-* **Documentation:** [https://succulent.readthedocs.io/en/latest/](https://succulent.readthedocs.io/en/latest/)
+* **Documentation:** [https://succulent.readthedocs.io/en/latest](https://succulent.readthedocs.io/en/latest/)
 * **Python versions:** 3.8.x, 3.9.x, 3.10.x, 3.11.x, 3.12.x
 * **Tested OS:** Windows, Ubuntu, Fedora, Alpine, Arch, macOS. **However, that does not mean it does not work on others**
 
-## About :information_source:
-
-Do you ever find it challenging and tricky to send sensor measurements :straight_ruler:, data :bar_chart:, or GPS positions from embedded devices :iphone:, microcontrollers, and [smartwatches](https://github.com/firefly-cpp/AST-Monitor) to a central server? :satellite: Setting up the primary data collection scripts can be a time-consuming :hourglass_flowing_sand: process, involving selecting a protocol, framework, API, and testing them out. Moreover, these scripts are often tailored for specific tasks, making them difficult to adapt to different scenarios.
-
-But fear not! Introducing succulent 🌵, a pure Python framework that simplifies the configuration, management, collection, and preprocessing of data collected via POST requests. This framework draws inspiration from real-world data collection challenges in [smart agriculture](https://github.com/firefly-cpp/smart-agriculture-datasets/tree/main/plant-monitoring-esp32) :brain::herb:, specifically plant monitoring using ESP32 devices. The main goal behind succulent is to streamline the process of configuring various data parameters and provide a range of useful functions for data transformations. By leveraging succulent, you can set up your entire data collection endpoint within minutes, freeing you from the hassle of dealing with server-side scripts.:rocket::wrench:
-
-## Detailed Insights :mag:
+## 🔍 Detailed Insights
 
 The current version of succulent comes packed with exciting features, including, but not limited to:
 
 - **Hassle-free generation of request URLs** for seamless data collection 🌐
 - **Effortless data retrieval** from POST requests 📥
-- **Versatile data storage options**, such as CSV, JSON, SQLite, XML and even images 🗂️📊🖼️
-- **Customizable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
+- **Versatile data storage options**, such as CSV, JSON, SQLite, XML, and even images 🗂️📊🖼️
+- **Customisable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
 
 With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches. ⌚ So why waste precious time? ⏳ Dive into the world of succulent and unlock the true potential of your data! 💪📈
 
-## Installation
+## 📦 Installation
 
 ### pip
 
-Install succulent with pip:
+To install `succulent` with pip, use:
 
 ```sh
 pip install succulent
 ```
 ### Alpine Linux
 
-To install succulent on Alpine Linux, please use:
+To install `succulent` on Alpine Linux, use:
 
 ```sh
 $ apk add py3-succulent
@@ -63,7 +101,7 @@ $ apk add py3-succulent
 
 ### Arch Linux
 
-To install succulent on Arch Linux, please use an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers):
+To install `succulent` on Arch Linux, use an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers):
 
 ```sh
 $ yay -Syyu python-succulent
@@ -71,17 +109,16 @@ $ yay -Syyu python-succulent
 
 ### Fedora Linux
 
-To install succulent on Fedora, use:
+To install `succulent` on Fedora, use:
 
 ```sh
 $ dnf install python3-succulent
 ```
 
-## Container
+## 🐳 Container
+Create a `docker-compose.yml` file with the following content in the root directory:
 
-File: docker-compose.yml
-
-```sh
+```yml
 version: '3.8'
 
 services:
@@ -96,9 +133,10 @@ services:
       - GUNICORN_WORKERS=2
     command: gunicorn -b 0.0.0.0:8080 -w 2 -t 120 run:app
 ```
-File: configuration.yml (example)
 
-```sh
+Next create a `configuration.yml` file in the root directory. Here's an example of a configuration file:
+
+```yml
 data:
   - name: 'temperature'
   - name: 'humidity'
@@ -107,8 +145,11 @@ data:
   - name: 'date'
 ```
 
-File: run.py
-```bash
+More information regarding the configuration file and its settings can be found in the [configuration](#-configuration) section.
+
+Then create a Python file named `run.py` with the following content in the root directory:
+
+```python
 from succulent.api import SucculentAPI
 
 api = SucculentAPI(config='configuration.yml', format='csv')
@@ -117,23 +158,19 @@ api = SucculentAPI(config='configuration.yml', format='csv')
 app = api.app
 ```
 
-Build and run:
+Once you have set up the configuration file and the Python file, build the Docker image with the following command:
+
 ```bash
 docker compose build
 ```
 
-### Usage
-Run the container using Docker:
-```bash
-docker run -p 8080:8080 succulent-container
-```
+Finally, run the Docker container with the following command:
 
-Alternatively, you can use ``docker-compose``:
 ```bash
 docker compose up
 ```
 
-## Usage
+## 🚀 Usage
 
 ### Example
 
@@ -143,45 +180,43 @@ api = SucculentAPI(host='0.0.0.0', port=8080, config='configuration.yml', format
 api.start()
 ```
 
-## Configuration
+## 🔧 Configuration
 ### Data collection
-In the root directory, create a file named `configuration.yml` and define the following:
+In the root directory, create a `configuration.yml` file and define the following:
 ```yml
 data:
   - name: # Measure name
-    min: # Minimum value (optional)
-    max: # Maximum value (optional)
+    min:  # Minimum value (optional)
+    max:  # Maximum value (optional)
 ```
 
-To collect images, create a file named ``configuration.yml`` in the root directory and define the following:
+To collect images, create a ``configuration.yml`` file in the root directory and define the following:
 ```yml
 data:
   - key: # Key in POST request
 ```
 
-To access the URL for data collection, send a GET request or navigate to [http://localhost:8080/measure](http://localhost:8080/measure).
+To access the URL for data collection, send a GET request (or navigate) to [http://localhost:8080/measure](http://localhost:8080/measure).
 
 ### Data access
-To access data via the Succulent API, enable the results in the configuration file:
+To access data via the Succulent API, enable the results option in the configuration file:
 ```yml
 results:
   - enable: true # false by default
 ```
 
-To access the collected data, send a GET request or navigate to [http://localhost:8080/data](http://localhost:8080/data).
+To access the collected data, send a GET request (or navigate) to [http://localhost:8080/data](http://localhost:8080/data).
 
 ### Data export
-To export the data, enable the export in the configuration file:
+To export the data, enable the export option in the configuration file:
 ```yml
 results:
-  export:
-    enabled: true # false by default
+  - export: true # false by default
 ```
 
-To export the data, send a GET request or navigate to [http://localhost:8080/export](http://localhost:8080/export).
+To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). The data will be downloaded in the format specified in the configuration file.
 
-
-## License
+## 🔑 License
 
 This package is distributed under the MIT License. This license can be found online at <http://www.opensource.org/licenses/MIT>.
 
@@ -189,7 +224,7 @@ This package is distributed under the MIT License. This license can be found onl
 
 This framework is provided as-is, and there are no guarantees that it fits your purposes or that it is bug-free. Use it at your own risk!
 
-## Contributors ✨
+## 🫂 Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
