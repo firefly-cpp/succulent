@@ -8,6 +8,7 @@ succulent - Collect POST requests easily
 
 <p align="center">
   <img alt="PyPI Version" src="https://img.shields.io/pypi/v/succulent.svg">
+  <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/succulent.svg">
   <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/succulent.svg">
   <a href="https://aur.archlinux.org/packages/python-succulent">
     <img alt="AUR package" src="https://img.shields.io/aur/version/python-succulent?color=blue&label=Arch%20Linux&logo=arch-linux">
@@ -131,7 +132,6 @@ services:
       - ./configuration.yml:/succulent-app/configuration.yml
     environment:
       - GUNICORN_WORKERS=2
-    command: gunicorn -b 0.0.0.0:8080 -w 2 -t 120 run:app
 ```
 
 Next create a `configuration.yml` file in the root directory. Here's an example of a configuration file:
