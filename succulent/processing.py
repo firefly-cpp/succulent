@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import inspect
-import xmltodict
+import xml.etree.ElementTree as ET
 import pandas as pd
 from datetime import datetime
 
@@ -147,10 +147,9 @@ class Processing:
                 if req.is_json:
                     value = req.json[column] if column in req.json else None
                 elif self.format == 'xml':
-                    xml = xmltodict.parse(req.data)
-                    data = xml[list(xml.keys())[0]]
-                    value = xml[list(xml.keys())[0]][column] if column in xml[list(
-                        xml.keys())[0]].keys() else None
+                    root = ET.fromstring(req.data)
+                    data = {child.tag: child.text for child in root}
+                    value = data[column] if column in data else None
                 else:
                     value = req.args.get(column, default=None)
 
