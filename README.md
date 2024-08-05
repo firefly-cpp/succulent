@@ -125,7 +125,7 @@ version: '3.8'
 
 services:
   app:
-    image: codeberg.org/firefly-cpp/succulent:v3
+    image: codeberg.org/firefly-cpp/succulent:v4
     ports:
       - "8080:8080"
     volumes:
@@ -142,8 +142,10 @@ data:
   - name: 'temperature'
   - name: 'humidity'
   - name: 'light'
-  - name: 'time'
-  - name: 'date'
+results:
+  - enable: true
+  - export: true
+timestamp: true
 ```
 
 More information regarding the configuration file and its settings can be found in the [configuration](#-configuration) section.
