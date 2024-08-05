@@ -92,6 +92,7 @@ To install `succulent` with pip, use:
 ```sh
 pip install succulent
 ```
+
 ### Alpine Linux
 
 To install `succulent` on Alpine Linux, use:
@@ -190,10 +191,15 @@ data:
     max:  # Maximum value (optional)
 ```
 
-To collect images, create a ``configuration.yml`` file in the root directory and define the following:
+To collect images, create a `configuration.yml` file in the root directory and define the following:
 ```yml
 data:
   - key: # Key in POST request
+```
+
+To store data collection timestamps, create a `configuration.yml` file in the root directory and define the following:
+```yml
+timestamp: true # false by default
 ```
 
 To access the URL for data collection, send a GET request (or navigate) to [http://localhost:8080/measure](http://localhost:8080/measure).
