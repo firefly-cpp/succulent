@@ -19,8 +19,9 @@ class Processing:
         format (str): The format of the data ('csv', 'json', 'sqlite', 'image', or 'xml').
         columns (list): List of feature names in the data.
         boundaries (list): List of minimum and maximum boundaries for each feature in the data.
-        enable_results (bool): If True, the results are enabled.
-        enable_export (bool): If True, the export is enabled.
+        timestamp (bool): Enable timestamp storage for the data collection.
+        enable_results (bool): Enable access to the collected data via the API.
+        enable_export (bool): Enable collected data export via the API.
         df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
         key (str): The key to retrieve the image file from the request (for 'image' format).
 
@@ -38,6 +39,7 @@ class Processing:
         self.directory = os.path.join(os.path.dirname(
             os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
+        self.timestamp = False
         self.enable_results = False
         self.enable_export = False
 
@@ -51,6 +53,10 @@ class Processing:
                     if key in configuration
                 }
             } for configuration in config['data'] if configuration.get('min') is not None or configuration.get('max') is not None]
+
+            if 'timestamp' in config:
+                if config['timestamp'] == True:
+                    self.timestamp = True
 
             if 'results' in config:
                 for results in config['results']:
@@ -143,7 +149,8 @@ class Processing:
                 elif self.format == 'xml':
                     xml = xmltodict.parse(req.data)
                     data = xml[list(xml.keys())[0]]
-                    value = xml[list(xml.keys())[0]][column] if column in xml[list(xml.keys())[0]].keys() else None
+                    value = xml[list(xml.keys())[0]][column] if column in xml[list(
+                        xml.keys())[0]].keys() else None
                 else:
                     value = req.args.get(column, default=None)
 
@@ -158,6 +165,11 @@ class Processing:
 
             # Convert data to Series
             data = pd.Series(data, index=self.columns)
+
+            # Timestamp
+            if self.timestamp:
+                data['timestamp'] = datetime.now().strftime(
+                    '%Y-%m-%d %H:%M:%S')
 
             # Merge data
             self.df = pd.concat(
