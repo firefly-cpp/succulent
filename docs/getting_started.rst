@@ -75,7 +75,7 @@ To collect images, create a ``configuration.yml`` file in the root directory and
     data:
       - key: # Key in POST request
 
-To store data collection timestamps, create a `configuration.yml` file in the root directory and define the following:
+To store data collection timestamps, define the following setting in the ``configuration.yml`` file in the root directory:
 
 .. code:: yaml
 
@@ -83,17 +83,25 @@ To store data collection timestamps, create a `configuration.yml` file in the ro
 
 To access the URL for data collection, send a GET request (or navigate) to `http://localhost:8080/measure <http://localhost:8080/measure>`_.
 
+To restrict access to the collected data, define the following setting in the ``configuration.yml`` file in the root directory:
+
+.. code:: yaml
+
+    password: 'password' # Password for data access
+
+To store data using a password, append the password parameter to the request URL: ``?password=password``.
+
 Data access
 ~~~~~~~~~~~
 
-To access data via the Succulent API, enable the results option in the configuration file:
+To access data via the Succulent API, define the following setting in the ``configuration.yml`` file in the root directory:
 
 .. code:: yaml
 
     results:
       - enable: true # false by default
 
-To access the collected data, send a GET request (or navigate) to `http://localhost:8080/data <http://localhost:8080/data>`_.
+To access the collected data, send a GET request (or navigate) to `http://localhost:8080/data <http://localhost:8080/data>`_. To access password-protected data, append the password parameter to the request URL: ``?password=password``.
 
 Data export
 ~~~~~~~~~~~
@@ -105,4 +113,4 @@ To export the data, enable the export option in the configuration file:
     export:
       - enable: true # false by default
 
-To export the data, send a GET request (or navigate) to `http://localhost:8080/export <http://localhost:8080/export>`_. The data will be downloaded in the format specified in the configuration file.
+To export the data, send a GET request (or navigate) to `http://localhost:8080/export <http://localhost:8080/export>`_. To export password-protected data, append the password parameter to the request URL: ``?password=password``. The data will be downloaded in the format specified in the configuration file.
