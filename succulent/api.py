@@ -102,18 +102,18 @@ class SucculentAPI:
         Returns:
             Response: JSON response with the stored data.
         """
-        data = self.processing.data()
+        data = self.processing.data(request)
         if data['valid'] == False:
-            return jsonify({'message': data['message']}), 400
+            return jsonify({'message': data['message']}), data['code'] if data['code'] else 400
 
         return jsonify({'data': data['data'].to_dict(orient='records')}), 200
 
     def export(self):
         """Export the stored data to a CSV file.
         """
-        data = self.processing.export()
+        data = self.processing.export(request)
         if data['valid'] == False:
-            return jsonify({'message': data['message']}), 400
+            return jsonify({'message': data['message']}), data['code'] if data['code'] else 400
 
         # Convert DataFrame to CSV
         csv_data = data['data'].to_csv(index=False)

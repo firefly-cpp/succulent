@@ -19,6 +19,7 @@ class Processing:
         format (str): The format of the data ('csv', 'json', 'sqlite', 'image', or 'xml').
         columns (list): List of feature names in the data.
         boundaries (list): List of minimum and maximum boundaries for each feature in the data.
+        password (str): The password for data access. Default is None.
         timestamp (bool): Enable timestamp storage for the data collection.
         enable_results (bool): Enable access to the collected data via the API.
         enable_export (bool): Enable collected data export via the API.
@@ -39,13 +40,23 @@ class Processing:
         self.directory = os.path.join(os.path.dirname(
             os.path.abspath(inspect.stack()[index].filename)), 'data')
         self.format = format
+        self.password = None
         self.timestamp = False
         self.enable_results = False
         self.enable_export = False
 
+        if 'password' in config:
+            self.password = config['password']
+
         if format in ['csv', 'json', 'sqlite', 'xml']:
             self.columns = [configuration['name']
                             for configuration in config['data']]
+            if 'timestamp' in self.columns:
+                raise ValueError(
+                    '\"timestamp\" is a reserved keyword and cannot be used as a column name.')
+            if 'password' in self.columns:
+                raise ValueError(
+                    '\"password\" is a reserved keyword and cannot be used as a column name.')
             self.boundaries = [{
                 configuration['name']: {
                     key: configuration[key]
@@ -109,12 +120,27 @@ class Processing:
         Args:
             req (Request): The incoming request object.
 
+        Raises:
+            ValueError: Unauthorised access.
+
         Returns:
             None
         """
         # Directory preparation
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
+
+        # Password check
+        if self.password:
+            # Password from request
+            if req.is_json:
+                password = req.json['password'] if 'password' in req.json else None
+            else:
+                password = req.args.get('password', default=None)
+
+            # Password validation
+            if password != self.password:
+                raise ValueError('Unauthorised access.')
 
         if self.format in ['csv', 'json', 'sqlite', 'xml']:
             # Define paths
@@ -197,13 +223,23 @@ class Processing:
             file.save(os.path.join(self.directory,
                       f'{timestamp}_{file.filename}'))
 
-    def data(self):
+    def data(self, req):
         """Generate results based on the stored data.
 
         Returns:
             dict: The results as a dictionary.
         """
+        # Configuration check
         if self.enable_results:
+            # Password check
+            if self.password:
+                # Password from request
+                password = req.args.get('password', default=None)
+
+                # Password validation
+                if password != self.password:
+                    return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
+
             if self.format in ['csv', 'json', 'sqlite']:
                 # Define paths
                 path = os.path.join(
@@ -236,13 +272,23 @@ class Processing:
             # Results are not enabled in configuration
             return {'valid': False, 'message': 'Results are not enabled in your current configuration.'}
 
-    def export(self):
+    def export(self, req):
         """Export the stored data.
 
         Returns:
             dict: The exported data as a dictionary.
         """
+        # Configuration check
         if self.enable_export:
+            # Password check
+            if self.password:
+                # Password from request
+                password = req.args.get('password', default=None)
+
+                # Password validation
+                if password != self.password:
+                    return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
+
             if self.format in ['csv', 'json', 'sqlite']:
                 # Define paths
                 path = os.path.join(
