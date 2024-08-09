@@ -125,7 +125,7 @@ version: '3.8'
 
 services:
   app:
-    image: codeberg.org/firefly-cpp/succulent:v5
+    image: codeberg.org/firefly-cpp/succulent:v6
     ports:
       - "8080:8080"
     volumes:
