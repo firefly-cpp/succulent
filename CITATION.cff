@@ -1,14 +1,40 @@
-abstract: '<p><strong>Full Changelog</strong>: https://github.com/firefly-cpp/succulent/compare/0.3.0...0.3.1</p>'
-authors:
-- affiliation: UM FERI
-  family-names: Tadej Lahovnik
-- family-names: Iztok Fister Jr.
 cff-version: 1.2.0
-date-released: '2023-12-18'
+message: "Please  cite this repository if you use it in your work."
+title: "succulent"
+abstract: "Do you ever find it challenging and tricky to send sensor measurements, data, or GPS positions from embedded devices, microcontrollers, and smartwatches to a central server? Setting up the primary data collection scripts can be a time-consuming process, involving selecting a protocol, framework, API, and testing them out. Moreover, these scripts are often tailored for specific tasks, making them difficult to adapt to different scenarios."
 doi: 10.5281/zenodo.10402365
-license:
-- cc-by-4.0
-repository-code: https://github.com/firefly-cpp/succulent/tree/0.3.1
-title: 'firefly-cpp/succulent: 0.3.1'
-type: software
-version: 0.3.1
+authors:
+  - family-names: Fister Jr.
+    given-names: Iztok
+    email: iztok@iztok.space
+    orcid: 0000-0002-6418-1272
+  - family-names: Lahovnik
+    given-names: Tadej
+    orcid: 0009-0005-9689-2991
+license: "MIT License"
+repository-code: "https://github.com/firefly-cpp/succulent"
+keywords:
+  - Raspberry Pi
+  - Data Science
+  - Machine Learning
+  - ESP32
+  - Data Collection
+  - Data Preprocessing Pipelines
+repository: "https://github.com/firefly-cpp/succulent"
+version: 0.4.0
+languages:
+  - Python
+preferred-citation:
+  type: software
+  title: "succulent"
+  authors:
+    - family-names: Fister Jr.
+      given-names: Iztok
+      email: iztok@iztok.space
+      orcid: 0000-0002-6418-1272
+    - family-names: Lahovnik
+      given-names: Tadej
+      orcid: 0009-0005-9689-2991
+  version: 0.4.0
+  license: "MIT License"
+  repository-code: "https://github.com/firefly-cpp/succulent"
