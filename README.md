@@ -3,8 +3,12 @@
 </p>
 
 <h1 align="center">
-succulent - Collect POST requests easily
+succulent
 </h1>
+
+<h2 align="center">
+  Collect POST requests easily
+</h2>
 
 <p align="center">
   <img alt="PyPI Version" src="https://img.shields.io/pypi/v/succulent.svg">
@@ -59,6 +63,7 @@ succulent - Collect POST requests easily
   <a href="#-container">🐳 Container</a> •
   <a href="#-usage">🚀 Usage</a> •
   <a href="#-configuration">🔧 Configuration</a> •
+  <a href="#-cite-us">📄 Cite us</a> •
   <a href="#-license">🔑 License</a> •
   <a href="#-contributors">🫂 Contributors</a>
 </p>
@@ -230,6 +235,9 @@ results:
 ```
 
 To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, append the password parameter to the request URL: `?password=password`. The data will be downloaded in the format specified in the configuration file.
+
+## 📄 Cite us
+Fister Jr., Iztok, and Tadej Lahovnik. Succulent. 0.4.0, doi:[10.5281/zenodo.10402365](https://doi.org/10.5281/zenodo.10402365).
 
 ## 🔑 License
 
