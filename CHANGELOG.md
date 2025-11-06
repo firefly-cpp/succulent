@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.4.2](https://github.com/firefly-cpp/succulent/tree/0.4.2) (2025-07-31)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.4.1...0.4.2)
+
+**Merged pull requests:**
+
+- build\(deps-dev\): bump urllib3 from 2.3.0 to 2.5.0 [\#53](https://github.com/firefly-cpp/succulent/pull/53) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump requests from 2.32.3 to 2.32.4 [\#52](https://github.com/firefly-cpp/succulent/pull/52) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump setuptools from 75.8.0 to 78.1.1 [\#51](https://github.com/firefly-cpp/succulent/pull/51) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump jinja2 from 3.1.5 to 3.1.6 [\#50](https://github.com/firefly-cpp/succulent/pull/50) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [0.4.1](https://github.com/firefly-cpp/succulent/tree/0.4.1) (2025-02-05)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.4.0...0.4.1)
+
+**Merged pull requests:**
+
+- build\(deps\): bump werkzeug from 3.0.3 to 3.0.6 [\#49](https://github.com/firefly-cpp/succulent/pull/49) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [0.4.0](https://github.com/firefly-cpp/succulent/tree/0.4.0) (2024-08-06)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.3.4...0.4.0)
+
+## [0.3.4](https://github.com/firefly-cpp/succulent/tree/0.3.4) (2024-08-05)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.3.3...0.3.4)
+
+**Closed issues:**
+
+- Preserve timestamps [\#48](https://github.com/firefly-cpp/succulent/issues/48)
+- Issues [\#47](https://github.com/firefly-cpp/succulent/issues/47)
+- Move sphinx dependencies to dev [\#39](https://github.com/firefly-cpp/succulent/issues/39)
+- XML Files | test case [\#38](https://github.com/firefly-cpp/succulent/issues/38)
+
+**Merged pull requests:**
+
+- build\(deps-dev\): bump zipp from 3.18.1 to 3.19.1 [\#46](https://github.com/firefly-cpp/succulent/pull/46) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump certifi from 2024.2.2 to 2024.7.4 [\#45](https://github.com/firefly-cpp/succulent/pull/45) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump urllib3 from 2.2.1 to 2.2.2 [\#44](https://github.com/firefly-cpp/succulent/pull/44) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump requests from 2.31.0 to 2.32.0 [\#43](https://github.com/firefly-cpp/succulent/pull/43) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump jinja2 from 3.1.3 to 3.1.4 [\#42](https://github.com/firefly-cpp/succulent/pull/42) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump werkzeug from 3.0.2 to 3.0.3 [\#41](https://github.com/firefly-cpp/succulent/pull/41) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump idna from 3.6 to 3.7 [\#40](https://github.com/firefly-cpp/succulent/pull/40) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [0.3.3](https://github.com/firefly-cpp/succulent/tree/0.3.3) (2024-02-23)
+
+[Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.3.2...0.3.3)
+
+**Closed issues:**
+
+- Collect XML files [\#36](https://github.com/firefly-cpp/succulent/issues/36)
+
 ## [0.3.2](https://github.com/firefly-cpp/succulent/tree/0.3.2) (2023-12-18)
 
 [Full Changelog](https://github.com/firefly-cpp/succulent/compare/0.3.1...0.3.2)
@@ -62,7 +114,7 @@
 **Merged pull requests:**
 
 - docs: add zala-lahovnik as a contributor for doc [\#28](https://github.com/firefly-cpp/succulent/pull/28) ([allcontributors[bot]](https://github.com/apps/allcontributors))
-- doc: update README [\#27](https://github.com/firefly-cpp/succulent/pull/27) ([zala-lahovnik](https://github.com/zala-lahovnik))
+- doc: update README [\#27](https://github.com/firefly-cpp/succulent/pull/27) ([zalalahovnik](https://github.com/zalalahovnik))
 - Add instructions for install python-succulent in Arch Linux [\#26](https://github.com/firefly-cpp/succulent/pull/26) ([carlosal1015](https://github.com/carlosal1015))
 
 ## [0.2.3](https://github.com/firefly-cpp/succulent/tree/0.2.3) (2023-06-09)

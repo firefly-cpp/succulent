@@ -74,7 +74,7 @@ But fear not! Introducing succulent 🌵, a pure Python framework that simplifie
 
 * **Free software:** MIT license
 * **Documentation:** [https://succulent.readthedocs.io/en/latest](https://succulent.readthedocs.io/en/latest/)
-* **Python versions:** 3.8.x, 3.9.x, 3.10.x, 3.11.x, 3.12.x
+* **Python versions:** 3.8.x, 3.9.x, 3.10.x, 3.11.x, 3.12.x, 3.13.x
 * **Tested OS:** Windows, Ubuntu, Fedora, Alpine, Arch, macOS. **However, that does not mean it does not work on others**
 
 ## 🔍 Detailed Insights
