@@ -45,9 +45,7 @@ jobs:
         run: echo "C:\Users\runneradmin\AppData\Roaming\pypoetry\venv\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Check Poetry version
-        run: |
-          source $VENV
-          poetry --version
+        run: poetry --version
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
