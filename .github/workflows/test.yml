@@ -39,7 +39,7 @@ jobs:
           path: |
             ${{ env.APPDATA }}/pypoetry
             ${{ env.HOME }}/.local
-          key: poetry-0-${{ runner.os }}
+          key: poetry-${{ matrix.python-version }}-${{ runner.os }}
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
