@@ -53,12 +53,6 @@ jobs:
       - name: Configure poetry
         if: steps.cached-poetry.outputs.cache-hit == 'true'
         run: poetry config virtualenvs.in-project true
-      - name: Load cached venv
-        id: cached-pip-wheels
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.os == 'Windows' && '~\AppData\Local' || '~/.cache' }}
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Check Poetry version
         run: poetry --version
       - name: Install dependencies
