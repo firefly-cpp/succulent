@@ -57,7 +57,7 @@ jobs:
         id: cached-pip-wheels
         uses: actions/cache@v4
         with:
-          path: ~/.cache
+          path: ${{ runner.os == 'Windows' && '~\AppData\Local' || '~/.cache' }}
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Check Poetry version
         run: poetry --version
