@@ -36,7 +36,7 @@ jobs:
         id: cached-poetry
         uses: actions/cache@v4
         with:
-          path: ${{ runner.os == 'Windows' && env.APPDATA || format('{0}/.local', env.HOME) }}/pypoetry
+          path: ${{ runner.os == 'macOS' && '/Users/runner/.local' || '/home/runner/.local' }}
           key: poetry-${{ matrix.python-version }}-${{ runner.os }}
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
