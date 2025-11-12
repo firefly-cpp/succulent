@@ -36,8 +36,10 @@ jobs:
         id: cached-poetry
         uses: actions/cache@v4
         with:
-          path: ~/.local
-          key: poetry-0
+          path: |
+            ${{ env.APPDATA }}/pypoetry
+            ${{ env.HOME }}/.local
+          key: poetry-0-${{ runner.os }}
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
