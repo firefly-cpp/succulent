@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'succulent'
-copyright = '2023-2025, Tadej Lahovnik, Iztok Fister Jr.'
+copyright = '2023-2026, Tadej Lahovnik, Iztok Fister Jr.'
 author = 'Tadej Lahovnik, Iztok Fister Jr.'
 
 # The full version, including alpha/beta/rc tags

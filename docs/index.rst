@@ -3,11 +3,11 @@ succulent
 
 .. automodule:: succulent
 
-succulent -- Collect POST requests easily
+succulent -- A lightweight framework for collecting and processing data from HTTP POST requests
 
 * **Free software:** MIT license
 * **Github repository:** https://github.com/firefly-cpp/succulent
-* **Python versions:** 3.7.x, 3.8.x, 3.9.x, 3.10.x, 3.11x
+* **Python versions:** 3.7.x, 3.8.x, 3.9.x, 3.10.x, 3.11x, 3.12x, 3.13x
 
 General outline of the framework
 ---------------------------------

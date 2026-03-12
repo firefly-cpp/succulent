@@ -7,7 +7,7 @@ succulent
 </h1>
 
 <h2 align="center">
-  Collect POST requests easily
+  A lightweight framework for collecting and processing data from HTTP POST requests
 </h2>
 
 <p align="center">
