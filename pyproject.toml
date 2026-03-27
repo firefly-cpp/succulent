@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "succulent"
-version = "0.4.3"
-description = "Collect POST requests easily"
+version = "0.4.4"
+description = "A lightweight framework for collecting and processing data from HTTP POST requests"
 license = "MIT"
 authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>", "Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
 keywords = ['data collection', 'data science', 'ESP32', 'sensor measurements', 'smart agriculture', 'smartwatch']
