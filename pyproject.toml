@@ -19,7 +19,7 @@ lxml = "^5.2.2"
 numpy = "2.1.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.4.2"
+pytest = "^9.0.3"
 Sphinx = "^4.4.0"
 sphinx-rtd-theme = "^1.0.0"
 sphinxcontrib-bibtex = "^2.4.1"
