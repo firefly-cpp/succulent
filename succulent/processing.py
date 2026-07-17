@@ -4,6 +4,7 @@ import inspect
 import xml.etree.ElementTree as ET
 import pandas as pd
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 
 class Processing:
@@ -216,12 +217,24 @@ class Processing:
             # Retrieve image from request
             file = req.files[self.key]
 
+            filename = secure_filename(file.filename or '')
+            if not filename:
+                filename = 'upload'
+
             # Timestamp
             timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
 
+            # Build the destination path and verify it stays within the target
+            # directory. ``secure_filename`` already prevents traversal; this
+            # check is defence in depth in case that behaviour ever changes.
+            directory = os.path.abspath(self.directory)
+            destination = os.path.abspath(
+                os.path.join(directory, f'{timestamp}_{filename}'))
+            if os.path.commonpath([directory, destination]) != directory:
+                raise ValueError('Invalid file path.')
+
             # Store image to device
-            file.save(os.path.join(self.directory,
-                      f'{timestamp}_{file.filename}'))
+            file.save(destination)
 
     def data(self, req):
         """Generate results based on the stored data.
