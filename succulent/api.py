@@ -20,7 +20,18 @@ class SucculentAPI:
         format (str): The format of the data ('csv', 'json', 'sqlite', or 'image').
         app (Flask): Flask application.
         processing (Processing): Instance of the Processing class.
+
+    Configuration:
+        max_content_length (int, optional): Maximum accepted size (in bytes)
+            of an incoming request body. Defaults to
+            ``DEFAULT_MAX_CONTENT_LENGTH`` (5 MB) when not set in the
+            configuration file. Requests exceeding this size are rejected
+            with a 413 response before being processed, to protect the
+            server against oversized or flooding POST requests.
     """
+
+    # Default maximum size (in bytes) accepted for a single request body.
+    DEFAULT_MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
 
     def __init__(self, config, host='0.0.0.0', port=8080, format='csv'):
         self.host = host
@@ -36,6 +47,14 @@ class SucculentAPI:
 
         # Initialise Flask
         self.app = Flask(__name__, static_url_path='/succulent/static')
+
+        # Limit the maximum accepted size of incoming request bodies to
+        # protect the server against oversized or flooding POST requests.
+        # Can be overridden via the 'max_content_length' (bytes) setting
+        # in the configuration file.
+        self.app.config['MAX_CONTENT_LENGTH'] = int(
+            self.config.get('max_content_length', self.DEFAULT_MAX_CONTENT_LENGTH))
+
         self.app.add_url_rule('/', 'index', self.index, methods=['GET'])
         self.app.add_url_rule('/measure', 'url', self.url, methods=['GET'])
         self.app.add_url_rule('/measure', 'measure',
@@ -43,6 +62,8 @@ class SucculentAPI:
         self.app.add_url_rule('/data', 'data', self.data, methods=['GET'])
         self.app.add_url_rule('/export', 'export',
                               self.export, methods=['GET'])
+        self.app.register_error_handler(
+            413, self.payload_too_large)
 
     def index(self):
         """Generate index HTML page with information about the API.
@@ -124,6 +145,17 @@ class SucculentAPI:
         response.headers["Content-Type"] = "text/csv"
 
         return response, 200
+
+    def payload_too_large(self, error):
+        """Handle requests whose body exceeds 'MAX_CONTENT_LENGTH'.
+
+        Args:
+            error (HTTPException): The raised 413 error.
+
+        Returns:
+            Response: JSON response with an error message.
+        """
+        return jsonify({'message': 'Payload too large.'}), 413
 
     def start(self):
         """Start the Flask application on the specified host and port.
