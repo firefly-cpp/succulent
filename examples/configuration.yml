@@ -1,3 +1,10 @@
+# Succulent configuration file
+#
+# Copy this file to your project root as 'configuration.yml' and
+# adjust the values to match your setup.
+
+# --- Data fields ---
+# Define the names and optional min/max boundaries for each incoming value.
 data:
   - name: 'temperature'
     min: -20
@@ -6,3 +13,31 @@ data:
   - name: 'light'
   - name: 'time'
   - name: 'date'
+
+# --- Timestamp ---
+# Set to true to automatically record when each data point was received.
+timestamp: false
+
+# --- Password protection ---
+# Uncomment to restrict write access to the /measure endpoint and read
+# access to /data and /export.
+# password: 'change-me'
+
+# --- Data access ---
+# Controls whether collected data can be queried or exported via the API.
+results:
+  - enable: false   # Set to true to expose GET /data
+  - export: false   # Set to true to expose GET /export
+
+# --- Request size limit ---
+# Maximum accepted size (in bytes) of an incoming POST request body.
+# Requests larger than this are rejected immediately with a 413 response,
+# protecting the server against oversized or flooding payloads.
+#
+# Default: 5242880 (5 MB)
+# Examples:
+#   1048576   =  1 MB  (tight limit for plain sensor readings)
+#   5242880   =  5 MB  (default, suitable for small image uploads)
+#   16777216  = 16 MB  (larger image uploads)
+#
+max_content_length: 5242880
