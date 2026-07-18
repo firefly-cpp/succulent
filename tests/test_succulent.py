@@ -22,7 +22,7 @@ def teardown(request):
 class TestProcessing(unittest.TestCase):
     """
     Test case for the Processing class.
-    
+
     This test case focuses on testing the methods and functionality of the Processing class.
     """
 
@@ -45,7 +45,7 @@ class TestProcessing(unittest.TestCase):
     def test_process_json(self):
         """
         Test the process() method of the Processing class with JSON data.
-        
+
         This test ensures that the process() method correctly merges the JSON data with the existing DataFrame.
         """
         try:
@@ -81,7 +81,7 @@ class TestProcessing(unittest.TestCase):
     def test_process_xml(self):
         """
         Test the process() method of the Processing class with XML data.
-        
+
         This test ensures that the process() method correctly merges the XML data with the existing DataFrame.
         """
         try:
@@ -116,7 +116,7 @@ class TestProcessing(unittest.TestCase):
         Test the process() method of the Processing class with query string arguments.
 
         This test ensures that the process() method correctly merges the query string arguments with the existing DataFrame.
-        """   
+        """
         try:
             # Mock the request object
             request = MagicMock()
@@ -146,7 +146,7 @@ class TestImageProcessing(unittest.TestCase):
         configuration = Configuration(config_path)
         config = configuration.load_config()
         self.processing = Processing(config=config, format='image', unittest=True)
-    
+
     def test_process_image(self):
         # Temporary file to simulate an image
         image_data = b'Test image data'
@@ -176,7 +176,7 @@ class TestImageProcessing(unittest.TestCase):
 class TestSucculentAPI(unittest.TestCase):
     """
     Test case for the SucculentAPI class.
-    
+
     This test case focuses on testing the methods and functionality of the SucculentAPI class.
     """
 
@@ -260,6 +260,31 @@ class TestSucculentAPI(unittest.TestCase):
 
         # Assert the response
         self.assertEqual(response.status_code, 400)
+
+    def test_default_max_content_length(self):
+        """
+        Test that MAX_CONTENT_LENGTH defaults to SucculentAPI.DEFAULT_MAX_CONTENT_LENGTH
+        when not set in the configuration file.
+        """
+        self.assertEqual(
+            self.api.app.config['MAX_CONTENT_LENGTH'],
+            SucculentAPI.DEFAULT_MAX_CONTENT_LENGTH
+        )
+
+    def test_payload_too_large(self):
+        """
+        Test that a request exceeding MAX_CONTENT_LENGTH is rejected with a
+        413 response and a consistent JSON error message, instead of
+        Flask's default HTML error page.
+        """
+        # Lower the limit for this test to make it easy to exceed
+        self.api.app.config['MAX_CONTENT_LENGTH'] = 10
+
+        oversized_payload = {'temperature': '25' * 100}
+        response = self.api.app.test_client().post('/measure', json=oversized_payload)
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json['message'], 'Payload too large.')
 
 class TestConfiguration(unittest.TestCase):
     """
