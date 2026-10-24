@@ -324,7 +324,7 @@ class Processing:
             if not self.authorised(req):
                 return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
 
-            if self.format in ['csv', 'json', 'sqlite']:
+            if self.format in ['csv', 'json', 'sqlite', 'xml']:
                 # Define paths
                 path = os.path.join(
                     self.directory, f'data.{self.format}'
@@ -340,6 +340,8 @@ class Processing:
                         conn = sqlite3.connect(path)
                         self.df = pd.read_sql_query('SELECT * FROM data', conn)
                         conn.close()
+                    elif self.format == 'xml':
+                        self.df = pd.read_xml(path)
                     else:
                         raise ValueError(f'Invalid file type: {self.format}')
 
@@ -368,7 +370,7 @@ class Processing:
             if not self.authorised(req):
                 return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
 
-            if self.format in ['csv', 'json', 'sqlite']:
+            if self.format in ['csv', 'json', 'sqlite', 'xml']:
                 # Define paths
                 path = os.path.join(
                     self.directory, f'data.{self.format}'
@@ -384,6 +386,8 @@ class Processing:
                         conn = sqlite3.connect(path)
                         self.df = pd.read_sql_query('SELECT * FROM data', conn)
                         conn.close()
+                    elif self.format == 'xml':
+                        self.df = pd.read_xml(path)
                     else:
                         raise ValueError(f'Invalid file type: {self.format}')
 

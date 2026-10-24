@@ -446,6 +446,44 @@ class TestPassword(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestXmlResults(unittest.TestCase):
+    """
+    Test case for reading and exporting data stored in the XML format.
+    """
+
+    def setUp(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='xml')
+        self.client = self.api.app.test_client()
+        self.headers = {'X-API-Key': 's3cret', 'Content-Type': 'application/xml'}
+
+    def test_no_data_returns_400(self):
+        for endpoint in ['/data', '/export']:
+            with self.subTest(endpoint=endpoint):
+                response = self.client.get(endpoint, headers=self.headers)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json['message'], 'No data available.')
+
+    def test_data_and_export(self):
+        for body in ['<data><temperature>21.5</temperature><humidity>40</humidity></data>',
+                     '<data><temperature>22</temperature><humidity>45</humidity></data>']:
+            response = self.client.post('/measure', data=body, headers=self.headers)
+            self.assertEqual(response.status_code, 200)
+
+        response = self.client.get('/data', headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['data'], [
+            {'temperature': 21.5, 'humidity': 40},
+            {'temperature': 22.0, 'humidity': 45},
+        ])
+
+        response = self.client.get('/export', headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['Content-Type'], 'text/csv')
+        self.assertEqual(response.data.decode().splitlines(),
+                         ['temperature,humidity', '21.5,40', '22.0,45'])
+
+
 class TestConfiguration(unittest.TestCase):
     """
     Test case for the Configuration class.

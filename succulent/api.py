@@ -129,7 +129,7 @@ class SucculentAPI:
         """
         data = self.processing.data(request)
         if data['valid'] == False:
-            return jsonify({'message': data['message']}), data['code'] if data['code'] else 400
+            return jsonify({'message': data['message']}), data.get('code', 400)
 
         return jsonify({'data': data['data'].to_dict(orient='records')}), 200
 
@@ -138,7 +138,7 @@ class SucculentAPI:
         """
         data = self.processing.export(request)
         if data['valid'] == False:
-            return jsonify({'message': data['message']}), data['code'] if data['code'] else 400
+            return jsonify({'message': data['message']}), data.get('code', 400)
 
         # Convert DataFrame to CSV
         csv_data = data['data'].to_csv(index=False)
