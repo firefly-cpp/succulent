@@ -37,12 +37,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.os == 'Windows' && 'C:\Users\runneradmin\.local' || runner.os == 'macOS' && '/Users/runner/.local' || '/home/runner/.local' }}
-          key: poetry-${{ matrix.python-version }}-${{ runner.os }}
+          key: poetry-2.4.3-${{ matrix.python-version }}-${{ runner.os }}
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
-          version: 1.8.3
+          version: 2.4.3
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
