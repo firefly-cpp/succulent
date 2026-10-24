@@ -86,14 +86,23 @@ class SucculentAPI:
     def url(self):
         """Generate URL with parameters for measurements.
 
+        The URL is built from the address the client used to reach the
+        server (e.g. ``http://192.168.1.10:8080/measure?...``), so it can be
+        used directly, unlike the bind address (e.g. ``0.0.0.0``).
+
         Returns:
             Response: JSON response with the generated URL.
         """
-        # Generate URL
+        # Absolute URL of the measure endpoint, as seen by the client
+        url = url_for('measure', _external=True)
+
+        # Append query parameters (none for the 'image' format)
         parameters = self.processing.parameters()
+        if parameters:
+            url = f'{url}?{parameters}'
 
         # Send response
-        return jsonify({'url': f'{self.host}:{self.port}/measure?{parameters}'}), 200
+        return jsonify({'url': url}), 200
 
     def measure(self):
         """Process the incoming request and store the timestamp.

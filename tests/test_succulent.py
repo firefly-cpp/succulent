@@ -196,12 +196,23 @@ class TestSucculentAPI(unittest.TestCase):
         """
         # Make a request to the URL endpoint
         with self.api.app.test_client() as client:
-            response = client.get('/measure')
+            response = client.get('/measure', base_url='http://192.168.1.10:8080')
             data = response.get_json()
 
-            # Verify the URL in the response
-            expected_url = '0.0.0.0:8080/measure?temperature=&humidity=&light=&time=&date='
+            # The URL must use the address the client used, not the bind address
+            expected_url = 'http://192.168.1.10:8080/measure?temperature=&humidity=&light=&time=&date='
             self.assertEqual(data['url'], expected_url)
+
+    def test_url_image_has_no_query(self):
+        """
+        For the 'image' format the URL has no trailing '?'.
+        """
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image.yml')
+        api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='image')
+
+        response = api.app.test_client().get('/measure', base_url='http://localhost:8080')
+
+        self.assertEqual(response.get_json()['url'], 'http://localhost:8080/measure')
 
     def test_measure(self):
         # Create a mock request object
