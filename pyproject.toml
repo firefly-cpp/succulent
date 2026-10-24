@@ -1,29 +1,63 @@
-[tool.poetry]
+[project]
 name = "succulent"
 version = "0.4.6"
 description = "A lightweight framework for collecting and processing data from HTTP POST requests"
-license = "MIT"
-authors = ["Iztok Fister Jr. <iztok@iztok-jr-fister.eu>", "Tadej Lahovnik <lahovnik.tadej@gmail.com>"]
-keywords = ['data collection', 'data science', 'ESP32', 'sensor measurements', 'smart agriculture', 'smartwatch']
-homepage = "https://github.com/firefly-cpp/succulent"
-repository = "https://github.com/firefly-cpp/succulent"
-documentation = "https://succulent.readthedocs.io/en/latest/"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Iztok Fister Jr.", email = "iztok@iztok-jr-fister.eu" },
+    { name = "Tadej Lahovnik", email = "lahovnik.tadej@gmail.com" },
+]
+requires-python = ">=3.10"
+keywords = ["data collection", "data science", "ESP32", "sensor measurements", "smart agriculture", "smartwatch"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Hardware",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pandas>=2.0.1,<3.0.0",
+    "pyyaml>=6.0,<7.0",
+    "flask>=2.3.2,<4.0.0",
+    "lxml>=5.2.2,<7.0.0",
+    "numpy>=1.26.0,<3.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pandas = "^2.0.1"
-pyyaml = "^6.0"
-flask = ">=2.3.2,<4.0.0"
-lxml = "^5.2.2"
-numpy = "2.1.0"
+[project.urls]
+Homepage = "https://github.com/firefly-cpp/succulent"
+Repository = "https://github.com/firefly-cpp/succulent"
+Documentation = "https://succulent.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/firefly-cpp/succulent/issues"
+Changelog = "https://github.com/firefly-cpp/succulent/blob/main/CHANGELOG.md"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry]
+packages = [{ include = "succulent" }]
+
+[tool.poetry.group.dev.dependencies]
 pytest = "^9.0.3"
-Sphinx = "^4.4.0"
-sphinx-rtd-theme = "^1.0.0"
-sphinxcontrib-bibtex = "^2.4.1"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = ">=7.0"
+sphinx-rtd-theme = ">=2.0"
+sphinxcontrib-bibtex = "^2.6"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
