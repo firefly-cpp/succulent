@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, url_for, make_response
 from succulent.configuration import Configuration
 from succulent.processing import Processing
-from datetime import datetime
 
 
 class SucculentAPI:
@@ -103,18 +102,14 @@ class SucculentAPI:
             Response: JSON response with a success message and timestamp.
         """
         try:
-            # Process request
-            self.processing.process(request)
-
-            # Collect and store timestamp
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            # You can store the timestamp in a database, file, or any other desired storage mechanism.
-            # Example: database.insert_timestamp(timestamp)
+            # Process request; returns the timestamp used for storage
+            processed_at = self.processing.process(request)
         except ValueError as err:
             # Invalid file type
             return jsonify({'message': str(err)}), 400
 
         # Send response
+        timestamp = processed_at.strftime('%Y-%m-%d %H:%M:%S')
         return jsonify({'message': 'Data stored', 'timestamp': timestamp}), 200
 
     def data(self):

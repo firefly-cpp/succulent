@@ -221,9 +221,27 @@ class TestSucculentAPI(unittest.TestCase):
         # Assert the response and timestamp
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['message'], 'Data stored')
-        # Compare the timestamp with the current time
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.assertEqual(response.json['timestamp'], current_time)
+        # The timestamp must be a valid, recent time (tolerant to second rollover)
+        returned = datetime.strptime(response.json['timestamp'], '%Y-%m-%d %H:%M:%S')
+        self.assertLess(abs((datetime.now() - returned).total_seconds()), 5)
+
+    def test_measure_timestamp_matches_stored(self):
+        """
+        The timestamp returned by /measure must equal the one stored with the data.
+        """
+        self.api.processing.timestamp = True
+
+        response = self.api.app.test_client().post('/measure', json={
+            'temperature': 25.0,
+            'humidity': 60.0,
+            'light': 'high',
+            'time': '10:30 AM',
+            'date': '2023-05-21'
+        })
+
+        self.assertEqual(response.status_code, 200)
+        stored = self.api.processing.df.iloc[-1]['timestamp']
+        self.assertEqual(response.json['timestamp'], stored)
 
     def test_upper_boundary(self):
         # Create a mock request object

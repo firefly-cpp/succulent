@@ -125,8 +125,13 @@ class Processing:
             ValueError: Unauthorised access.
 
         Returns:
-            None
+            datetime: The moment the request was processed. The same value is
+            stored in the ``timestamp`` column (if enabled) and used in the
+            image filename (for the 'image' format).
         """
+        # Single timestamp for this request, reused for storage and response
+        now = datetime.now()
+
         # Directory preparation
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
@@ -194,8 +199,7 @@ class Processing:
 
             # Timestamp
             if self.timestamp:
-                data['timestamp'] = datetime.now().strftime(
-                    '%Y-%m-%d %H:%M:%S')
+                data['timestamp'] = now.strftime('%Y-%m-%d %H:%M:%S')
 
             # Merge data
             self.df = pd.concat(
@@ -222,7 +226,7 @@ class Processing:
                 filename = 'upload'
 
             # Timestamp
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+            timestamp = now.strftime('%Y-%m-%d_%H%M%S')
 
             # Build the destination path and verify it stays within the target
             # directory. ``secure_filename`` already prevents traversal; this
@@ -235,6 +239,8 @@ class Processing:
 
             # Store image to device
             file.save(destination)
+
+        return now
 
     def data(self, req):
         """Generate results based on the stored data.
