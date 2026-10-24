@@ -355,6 +355,97 @@ class TestSucculentAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertEqual(response.json['message'], 'Payload too large.')
 
+
+class TestPassword(unittest.TestCase):
+    """
+    Test case for password protection (query, JSON body and headers).
+    """
+
+    def setUp(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
+        self.client = self.api.app.test_client()
+
+    def test_measure_accepted_password_sources(self):
+        cases = {
+            'query': dict(path='/measure?temperature=20&password=s3cret'),
+            'json': dict(path='/measure', json={'temperature': 20, 'password': 's3cret'}),
+            'bearer': dict(path='/measure?temperature=20',
+                           headers={'Authorization': 'Bearer s3cret'}),
+            'api_key': dict(path='/measure', json={'temperature': 20},
+                            headers={'X-API-Key': 's3cret'}),
+        }
+        for name, case in cases.items():
+            with self.subTest(source=name):
+                path = case.pop('path')
+                response = self.client.post(path, **case)
+                self.assertEqual(response.status_code, 200)
+
+    def test_measure_rejected_passwords(self):
+        cases = {
+            'missing': {},
+            'wrong_query': dict(query_string={'password': 'wrong'}),
+            'wrong_bearer': dict(headers={'Authorization': 'Bearer wrong'}),
+            'wrong_api_key': dict(headers={'X-API-Key': 'wrong'}),
+            'empty_bearer': dict(headers={'Authorization': 'Bearer '}),
+            'basic_scheme': dict(headers={'Authorization': 'Basic s3cret'}),
+        }
+        for name, kwargs in cases.items():
+            with self.subTest(case=name):
+                response = self.client.post('/measure', json={'temperature': 20}, **kwargs)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json['message'], 'Unauthorised access.')
+
+    def test_foreign_header_does_not_hide_password(self):
+        # A proxy/gateway adds its own token header; the client sends the
+        # succulent password elsewhere. The request must still be accepted.
+        cases = {
+            'bearer_plus_query': dict(path='/measure?temperature=20&password=s3cret',
+                                      headers={'Authorization': 'Bearer proxy-token'}),
+            'api_key_plus_json': dict(path='/measure',
+                                      json={'temperature': 20, 'password': 's3cret'},
+                                      headers={'X-API-Key': 'gateway-key'}),
+            'bearer_plus_api_key': dict(path='/measure', json={'temperature': 20},
+                                        headers={'Authorization': 'Bearer proxy-token',
+                                                 'X-API-Key': 's3cret'}),
+        }
+        for name, case in cases.items():
+            with self.subTest(case=name):
+                path = case.pop('path')
+                self.assertEqual(self.client.post(path, **case).status_code, 200)
+
+        # Only foreign values everywhere: still rejected
+        response = self.client.post('/measure', json={'temperature': 20},
+                                    headers={'Authorization': 'Bearer proxy-token',
+                                             'X-API-Key': 'gateway-key'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_password_is_not_stored(self):
+        self.client.post('/measure', json={'temperature': 20, 'password': 's3cret'})
+        self.assertNotIn('password', self.api.processing.df.columns)
+
+    def test_data_and_export_with_header(self):
+        self.client.post('/measure', json={'temperature': 20},
+                         headers={'X-API-Key': 's3cret'})
+
+        for endpoint in ['/data', '/export']:
+            with self.subTest(endpoint=endpoint):
+                self.assertEqual(self.client.get(endpoint).status_code, 401)
+                self.assertEqual(self.client.get(
+                    endpoint, headers={'Authorization': 'Bearer wrong'}).status_code, 401)
+                self.assertEqual(self.client.get(
+                    endpoint, headers={'Authorization': 'Bearer s3cret'}).status_code, 200)
+                self.assertEqual(self.client.get(
+                    endpoint, query_string={'password': 's3cret'}).status_code, 200)
+
+    def test_numeric_password_in_config(self):
+        # YAML 'password: 1234' is loaded as an int
+        self.api.processing.password = 1234
+        response = self.client.post('/measure', json={'temperature': 20},
+                                    headers={'X-API-Key': '1234'})
+        self.assertEqual(response.status_code, 200)
+
+
 class TestConfiguration(unittest.TestCase):
     """
     Test case for the Configuration class.

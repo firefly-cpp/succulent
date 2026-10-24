@@ -216,7 +216,17 @@ To restrict access to the collected data, define the following setting in the `c
 password: 'password' # Password for data access
 ```
 
-To store data using a password, append the password parameter to the request URL: `?password=password`.
+The password can be sent with any request (`/measure`, `/data` and `/export`) in one of the following ways:
+
+- `Authorization: Bearer password` header (recommended),
+- `X-API-Key: password` header,
+- `"password": "password"` field in a JSON body (`/measure` only),
+- `?password=password` query parameter (supported for backward compatibility).
+
+Prefer one of the headers, since URLs (including query parameters) are often written to server and proxy logs. For example:
+```sh
+curl -X POST http://localhost:8080/measure -H "Authorization: Bearer password" -H "Content-Type: application/json" -d '{"temperature": 21.5}'
+```
 
 ### Data access
 To access data via the Succulent API, define the following setting in the `configuration.yml` file in the root directory:
@@ -225,7 +235,7 @@ results:
   - enable: true # false by default
 ```
 
-To access the collected data, send a GET request (or navigate) to [http://localhost:8080/data](http://localhost:8080/data). To access password-protected data, append the password parameter to the request URL: `?password=password`.
+To access the collected data, send a GET request (or navigate) to [http://localhost:8080/data](http://localhost:8080/data). To access password-protected data, send the password as described above (e.g. the `Authorization: Bearer password` header).
 
 ### Data export
 To export the data, enable the export option in the configuration file:
@@ -234,7 +244,7 @@ results:
   - export: true # false by default
 ```
 
-To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, append the password parameter to the request URL: `?password=password`. The data will be downloaded in the format specified in the configuration file.
+To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, send the password as described above. The data will be downloaded in the format specified in the configuration file.
 
 ## 📄 Cite us
 Fister Jr., Iztok, and Tadej Lahovnik. Succulent. 0.4.0, doi:[10.5281/zenodo.10402365](https://doi.org/10.5281/zenodo.10402365).

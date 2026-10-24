@@ -1,4 +1,5 @@
 import os
+import hmac
 import sqlite3
 import inspect
 import xml.etree.ElementTree as ET
@@ -126,6 +127,72 @@ class Processing:
                 f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
         return value
 
+    def request_passwords(self, req):
+        """Collect all passwords supplied with the request.
+
+        A password can be sent in any of the following places:
+
+        - ``Authorization: Bearer <password>`` header,
+        - ``X-API-Key: <password>`` header,
+        - ``password`` field in a JSON body,
+        - ``password`` query parameter (kept for backward compatibility;
+          prefer a header, since URLs are often written to server logs).
+
+        All of them are returned, so a header added by a proxy or API gateway
+        does not hide a password sent in another place.
+
+        Args:
+            req (Request): The incoming request object.
+
+        Returns:
+            list: The supplied passwords (empty if none was given).
+        """
+        passwords = []
+
+        authorization = req.headers.get('Authorization', '')
+        scheme, _, token = authorization.partition(' ')
+        if scheme.lower() == 'bearer' and token.strip():
+            passwords.append(token.strip())
+
+        api_key = req.headers.get('X-API-Key')
+        if api_key:
+            passwords.append(api_key)
+
+        if req.is_json and isinstance(req.json, dict) and req.json.get('password') is not None:
+            passwords.append(req.json['password'])
+
+        query_password = req.args.get('password', default=None)
+        if query_password is not None:
+            passwords.append(query_password)
+
+        return passwords
+
+    def authorised(self, req):
+        """Check whether the request carries the configured password.
+
+        The request is accepted if the password matches in any of the places
+        listed in :meth:`request_passwords`. Each comparison uses
+        :func:`hmac.compare_digest`, which takes the same time regardless of
+        where the strings differ, to prevent timing attacks.
+
+        Args:
+            req (Request): The incoming request object.
+
+        Returns:
+            bool: True if no password is configured or a supplied one matches.
+        """
+        if not self.password:
+            return True
+
+        expected = str(self.password).encode('utf-8')
+
+        # Compare every candidate (no early exit) to keep timing uniform
+        matches = [
+            hmac.compare_digest(str(supplied).encode('utf-8'), expected)
+            for supplied in self.request_passwords(req)
+        ]
+        return any(matches)
+
     def process(self, req):
         """Process the incoming request and store the data accordingly.
 
@@ -148,16 +215,8 @@ class Processing:
             os.makedirs(self.directory)
 
         # Password check
-        if self.password:
-            # Password from request
-            if req.is_json:
-                password = req.json['password'] if 'password' in req.json else None
-            else:
-                password = req.args.get('password', default=None)
-
-            # Password validation
-            if password != self.password:
-                raise ValueError('Unauthorised access.')
+        if not self.authorised(req):
+            raise ValueError('Unauthorised access.')
 
         if self.format in ['csv', 'json', 'sqlite', 'xml']:
             # Define paths
@@ -262,13 +321,8 @@ class Processing:
         # Configuration check
         if self.enable_results:
             # Password check
-            if self.password:
-                # Password from request
-                password = req.args.get('password', default=None)
-
-                # Password validation
-                if password != self.password:
-                    return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
+            if not self.authorised(req):
+                return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
 
             if self.format in ['csv', 'json', 'sqlite']:
                 # Define paths
@@ -311,13 +365,8 @@ class Processing:
         # Configuration check
         if self.enable_export:
             # Password check
-            if self.password:
-                # Password from request
-                password = req.args.get('password', default=None)
-
-                # Password validation
-                if password != self.password:
-                    return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
+            if not self.authorised(req):
+                return {'valid': False, 'code': 401, 'message': 'Unauthorised access.'}
 
             if self.format in ['csv', 'json', 'sqlite']:
                 # Define paths

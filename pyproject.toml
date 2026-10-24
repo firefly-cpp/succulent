@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Iztok Fister Jr.", email = "iztok@iztok-jr-fister.eu" },
+    { name = "Iztok Fister Jr.", email = "iztok@iztok.dev" },
     { name = "Tadej Lahovnik", email = "lahovnik.tadej@gmail.com" },
 ]
 requires-python = ">=3.10"
