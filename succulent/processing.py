@@ -62,7 +62,7 @@ class Processing:
                 configuration['name']: {
                     key: configuration[key]
                     for key in ['min', 'max']
-                    if key in configuration
+                    if configuration.get(key) is not None
                 }
             } for configuration in config['data'] if configuration.get('min') is not None or configuration.get('max') is not None]
 
@@ -101,16 +101,27 @@ class Processing:
             boundary (dict): A dictionary containing 'min' and/or 'max' boundaries for the column.
             column (str): The name of the column being checked.
 
+        A missing or empty value is not checked and is stored as empty, so a
+        device can still send a measurement when one sensor has no reading.
+
         Raises:
-            ValueError: Value is outside the specified boundary.
+            ValueError: Value is not numeric or is outside the specified boundary.
 
         Returns:
-            float: The original value (within the boundary).
+            float: The original value (within the boundary, or empty).
         """
-        if 'min' in boundary and float(value) < float(boundary['min']):
+        if value is None or (isinstance(value, str) and value.strip() == ''):
+            return value
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f'{column} ({value}) must be a number.') from None
+
+        if 'min' in boundary and number < float(boundary['min']):
             raise ValueError(
                 f'{column} ({value}) is lower than the specified minimum ({boundary["min"]}).')
-        if 'max' in boundary and float(value) > float(boundary['max']):
+        if 'max' in boundary and number > float(boundary['max']):
             raise ValueError(
                 f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
         return value

@@ -1,4 +1,5 @@
 from succulent import __version__
+import pandas as pd
 import unittest
 import os
 import shutil
@@ -289,6 +290,45 @@ class TestSucculentAPI(unittest.TestCase):
 
         # Assert the response
         self.assertEqual(response.status_code, 400)
+
+    def test_boundary_missing_value(self):
+        # 'temperature' has a boundary but is missing (or empty): stored as empty
+        for payload in [{'humidity': 60.0}, {'temperature': None}, {'temperature': ''}]:
+            with self.subTest(payload=payload):
+                response = self.api.app.test_client().post('/measure', json=payload)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(pd.isna(self.api.processing.df.iloc[-1]['temperature'])
+                                or self.api.processing.df.iloc[-1]['temperature'] == '')
+
+    def test_boundary_missing_value_query_args(self):
+        # Same behaviour when data is sent as query parameters (e.g. from ESP32)
+        response = self.api.app.test_client().post('/measure?humidity=60')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(pd.isna(self.api.processing.df.iloc[-1]['temperature']))
+
+    def test_column_without_boundary_accepts_anything(self):
+        # 'humidity' has no min/max, so any value (or none) is accepted
+        for payload in [{'temperature': 10, 'humidity': 'abc'}, {'temperature': 10}]:
+            with self.subTest(payload=payload):
+                response = self.api.app.test_client().post('/measure', json=payload)
+                self.assertEqual(response.status_code, 200)
+
+    def test_empty_boundary_in_config_is_ignored(self):
+        # 'max:' without a value in YAML must not break validation
+        processing = Processing(
+            config={'data': [{'name': 'temperature', 'min': -20, 'max': None}]},
+            format='csv', unittest=True)
+        self.assertEqual(processing.boundaries, [{'temperature': {'min': -20}}])
+
+        processing = Processing(
+            config={'data': [{'name': 'temperature', 'min': None, 'max': None}]},
+            format='csv', unittest=True)
+        self.assertEqual(processing.boundaries, [])
+
+    def test_boundary_non_numeric_value(self):
+        response = self.api.app.test_client().post('/measure', json={'temperature': 'abc'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'temperature (abc) must be a number.')
 
     def test_default_max_content_length(self):
         """
