@@ -484,6 +484,31 @@ class TestXmlResults(unittest.TestCase):
                          ['temperature,humidity', '21.5,40', '22.0,45'])
 
 
+class TestStaleData(unittest.TestCase):
+    """
+    Test that /data and /export do not return stale in-memory data.
+    """
+
+    def setUp(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
+        self.client = self.api.app.test_client()
+        self.headers = {'X-API-Key': 's3cret'}
+
+    def test_removed_data_file_is_not_served(self):
+        self.client.post('/measure', json={'temperature': 20}, headers=self.headers)
+        self.assertEqual(self.client.get('/data', headers=self.headers).status_code, 200)
+
+        # Remove the stored data while the server keeps running
+        os.remove(os.path.join(self.api.processing.directory, 'data.csv'))
+
+        for endpoint in ['/data', '/export']:
+            with self.subTest(endpoint=endpoint):
+                response = self.client.get(endpoint, headers=self.headers)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json['message'], 'No data available.')
+
+
 class TestConfiguration(unittest.TestCase):
     """
     Test case for the Configuration class.
