@@ -344,6 +344,9 @@ class Processing:
                         self.df = pd.read_xml(path)
                     else:
                         raise ValueError(f'Invalid file type: {self.format}')
+                else:
+                    # No stored data (e.g. file removed): do not reuse stale data
+                    self.df = pd.DataFrame()
 
                 # Check if data is available
                 if self.df.empty:
@@ -390,6 +393,9 @@ class Processing:
                         self.df = pd.read_xml(path)
                     else:
                         raise ValueError(f'Invalid file type: {self.format}')
+                else:
+                    # No stored data (e.g. file removed): do not reuse stale data
+                    self.df = pd.DataFrame()
 
                 # Check if data is available
                 if self.df.empty:
