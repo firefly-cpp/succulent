@@ -1,6 +1,7 @@
 from succulent import __version__
 import pandas as pd
 import unittest
+import json
 import os
 import shutil
 import pytest
@@ -507,6 +508,57 @@ class TestStaleData(unittest.TestCase):
                 response = self.client.get(endpoint, headers=self.headers)
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(response.json['message'], 'No data available.')
+
+
+class TestDataJson(unittest.TestCase):
+    """
+    Test that /data always returns valid (strict) JSON.
+    """
+
+    def strict_json(self, raw):
+        # Like JavaScript's JSON.parse: reject NaN, Infinity and -Infinity
+        def reject(constant):
+            raise ValueError(f'Invalid JSON constant: {constant}')
+        return json.loads(raw, parse_constant=reject)
+
+    def test_missing_value_is_null(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        headers = {'X-API-Key': 's3cret'}
+
+        for fmt in ['csv', 'json', 'sqlite', 'xml']:
+            with self.subTest(format=fmt):
+                api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format=fmt)
+                client = api.app.test_client()
+
+                # 'humidity' is not sent, so it is stored as missing
+                if fmt == 'xml':
+                    client.post('/measure', data='<data><temperature>21</temperature></data>',
+                                headers={**headers, 'Content-Type': 'application/xml'})
+                else:
+                    client.post('/measure', json={'temperature': 21}, headers=headers)
+
+                response = client.get('/data', headers=headers)
+                self.assertEqual(response.status_code, 200)
+
+                data = self.strict_json(response.data.decode())['data']
+                self.assertEqual(len(data), 1)
+                self.assertIsNone(data[0]['humidity'])
+                self.assertEqual(float(data[0]['temperature']), 21.0)
+
+                shutil.rmtree(api.processing.directory, ignore_errors=True)
+
+    def test_infinity_is_null(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        headers = {'X-API-Key': 's3cret'}
+        api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
+        client = api.app.test_client()
+
+        # 'humidity' has no boundary, so 'inf' is accepted and read back as a float
+        client.post('/measure', json={'temperature': 21, 'humidity': 'inf'}, headers=headers)
+
+        response = client.get('/data', headers=headers)
+        data = self.strict_json(response.data.decode())['data']
+        self.assertIsNone(data[0]['humidity'])
 
 
 class TestConfiguration(unittest.TestCase):

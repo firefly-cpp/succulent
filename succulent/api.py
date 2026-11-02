@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 from flask import Flask, jsonify, request, url_for, make_response
 from succulent.configuration import Configuration
 from succulent.processing import Processing
@@ -131,7 +133,12 @@ class SucculentAPI:
         if data['valid'] == False:
             return jsonify({'message': data['message']}), data.get('code', 400)
 
-        return jsonify({'data': data['data'].to_dict(orient='records')}), 200
+        # Missing values (NaN) and infinities are not valid JSON, so send them
+        # as null, which every JSON client (e.g. JavaScript) can read
+        df = data['data'].replace([np.inf, -np.inf], np.nan)
+        df = df.astype(object).where(pd.notna(df), None)
+
+        return jsonify({'data': df.to_dict(orient='records')}), 200
 
     def export(self):
         """Export the stored data to a CSV file.
