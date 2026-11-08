@@ -5,6 +5,7 @@ from flask import Flask, Request, jsonify, request, url_for, make_response
 from werkzeug.exceptions import BadRequest, HTTPException
 from succulent.configuration import Configuration
 from succulent.processing import Processing
+from succulent.explore import Explorer
 
 
 class SucculentRequest(Request):
@@ -88,6 +89,15 @@ class SucculentAPI:
         # Flask's default HTML error page, like the API's own errors
         self.app.register_error_handler(HTTPException, self.http_error)
         self.app.register_error_handler(Exception, self.internal_error)
+
+        # Optional web dashboard (/explore), enabled in the configuration.
+        # It only reads the stored data and is separate from the API above.
+        if self.config.get('secret_key'):
+            self.app.secret_key = str(self.config['secret_key'])
+        self.explorer = None
+        if Explorer.enabled(self.config):
+            self.explorer = Explorer(self.processing, self.config.get('explore'))
+            self.explorer.register(self.app)
 
     def index(self):
         """Generate index HTML page with information about the API.

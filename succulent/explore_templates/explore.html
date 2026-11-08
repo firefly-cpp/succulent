@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>succulent explore</title>
+<link rel="stylesheet" href="{{ url_for('explore.static', filename='explore.css') }}">
+</head>
+<body>
+<div class="page" id="app"
+     data-format="{{ format }}"
+     data-refresh="{{ refresh }}"
+     data-gallery="{{ 'true' if gallery else 'false' }}"
+     data-export="{{ export_url or '' }}"
+     data-api="{{ url_for('explore.api_data') }}"
+     data-images="{{ url_for('explore.api_images') }}"
+     data-login="{{ url_for('explore.login') }}">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 28V14"></path><path d="M16 18c-5 0-8-3-8-8 5 0 8 3 8 8z"></path><path d="M16 15c0-5 3-8 8-8 0 5-3 8-8 8z"></path><path d="M9 28h14"></path></svg>
+      <div>
+        <h1 class="title">succulent <span>/ explore</span></h1>
+        <p class="subtitle" id="subtitle">format {{ format }}</p>
+      </div>
+    </div>
+    <div class="controls">
+      <p class="live" id="live" hidden><span class="dot" id="live-dot"></span><span id="live-text"></span></p>
+      <div class="segmented" id="ranges" role="group" aria-label="Time range" hidden></div>
+      <button type="button" class="btn toggle" id="auto" aria-pressed="true" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+        <span id="auto-text">Auto-refresh</span>
+      </button>
+      {% if export_url %}
+      <a class="btn dark" href="{{ export_url }}" download>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
+        Export CSV
+      </a>
+      {% endif %}
+      {% if protected %}
+      <form method="post" action="{{ url_for('explore.logout') }}">
+        <button type="submit" class="btn">Sign out</button>
+      </form>
+      {% endif %}
+    </div>
+  </header>
+  <p class="banner" id="error" role="alert" hidden></p>
+  <main id="content" class="content">
+    <p class="empty">Loading…</p>
+  </main>
+</div>
+<script src="{{ url_for('explore.static', filename='explore.js') }}"></script>
+</body>
+</html>
