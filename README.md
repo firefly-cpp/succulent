@@ -202,7 +202,10 @@ To collect images, create a `configuration.yml` file in the root directory and d
 ```yml
 data:
   - key: # Key in POST request
+    allowed_extensions: ['jpg', 'png'] # Optional, see below
 ```
+
+Only images are accepted. By default, the allowed extensions are `jpg`, `jpeg`, `png`, `gif`, `bmp`, `webp`, `tif` and `tiff`; use `allowed_extensions` to narrow or extend this list. For these image types, the content of the file is checked as well, so a file renamed to `.jpg` that is not a JPEG image is rejected. Other extensions you allow (e.g. `heic`) are checked by extension only. A file without an extension (e.g. from an ESP32-CAM) is accepted if its content is an allowed image, and the matching extension is added. Rejected uploads return a `400` response with the reason. Images are stored as `<timestamp>_<filename>`; an image with the same name in the same second gets a counter (e.g. `_1`) instead of overwriting the earlier one.
 
 To store data collection timestamps, define the following setting in the `configuration.yml` file in the root directory:
 ```yml
