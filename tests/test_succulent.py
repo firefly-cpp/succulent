@@ -1,6 +1,7 @@
 from succulent import __version__
 import pandas as pd
 import unittest
+import io
 import json
 import os
 import shutil
@@ -150,8 +151,9 @@ class TestImageProcessing(unittest.TestCase):
         self.processing = Processing(config=config, format='image', unittest=True)
 
     def test_process_image(self):
-        # Temporary file to simulate an image
-        image_data = b'Test image data'
+        # Temporary file to simulate an image (starts with the JPEG signature,
+        # since the content of uploaded images is checked)
+        image_data = b'\xff\xd8\xff\xe0' + b'Test image data'
         with open('temp_image.jpg', 'wb') as f:
             f.write(image_data)
 
@@ -568,6 +570,105 @@ class TestJsonRequests(unittest.TestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(response.json['message'],
                                  'Invalid JSON: the request body must be a JSON object.')
+
+
+class TestImageUpload(unittest.TestCase):
+    """
+    Test case for checking uploaded images.
+    """
+
+    JPEG = b'\xff\xd8\xff\xe0' + b'\x00' * 32
+    PNG = b'\x89PNG\r\n\x1a\n' + b'\x00' * 32
+
+    def setUp(self):
+        self.config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=self.config_path, format='image')
+        self.client = self.api.app.test_client()
+
+    def tearDown(self):
+        shutil.rmtree(self.api.processing.directory, ignore_errors=True)
+
+    def upload(self, content, filename, field='image', client=None):
+        client = client or self.client
+        return client.post('/measure', data={field: (io.BytesIO(content), filename)},
+                           content_type='multipart/form-data')
+
+    def stored_files(self):
+        return sorted(os.listdir(self.api.processing.directory))
+
+    def test_signatures(self):
+        self.assertEqual(Processing.image_type(self.JPEG), 'jpeg')
+        self.assertEqual(Processing.image_type(self.PNG), 'png')
+        self.assertEqual(Processing.image_type(b'GIF89a' + b'\x00' * 10), 'gif')
+        self.assertEqual(Processing.image_type(b'BM' + b'\x00' * 10), 'bmp')
+        self.assertEqual(Processing.image_type(b'RIFF\x00\x00\x00\x00WEBP'), 'webp')
+        self.assertEqual(Processing.image_type(b'II*\x00' + b'\x00' * 8), 'tiff')
+        self.assertEqual(Processing.image_type(b'MM\x00*' + b'\x00' * 8), 'tiff')
+        self.assertIsNone(Processing.image_type(b'<?php echo 1; ?>'))
+
+    def test_valid_images_are_stored(self):
+        for content, filename in [(self.JPEG, 'a.jpg'), (self.JPEG, 'b.JPEG'), (self.PNG, 'c.png')]:
+            with self.subTest(filename=filename):
+                self.assertEqual(self.upload(content, filename).status_code, 200)
+        self.assertEqual(len(self.stored_files()), 3)
+
+    def test_file_without_extension_gets_one(self):
+        # e.g. ESP32-CAM sends the image without a filename
+        self.assertEqual(self.upload(self.JPEG, '').status_code, 200)
+        self.assertEqual(self.upload(self.PNG, 'capture').status_code, 200)
+        files = self.stored_files()
+        self.assertTrue(any(f.endswith('_upload.jpg') for f in files), files)
+        self.assertTrue(any(f.endswith('_capture.png') for f in files), files)
+
+    def test_rejected_files(self):
+        cases = {
+            'executable': (b'MZ\x90\x00', 'x.exe', 'File type ".exe" is not allowed'),
+            'html': (b'<script>alert(1)</script>', 'x.html', 'File type ".html" is not allowed'),
+            'script as jpg': (b'<?php system($_GET[1]); ?>', 'x.jpg', 'does not match its extension'),
+            'png as jpg': (self.PNG, 'x.jpg', 'does not match its extension'),
+            'unknown, no extension': (b'hello', 'capture', 'not an allowed image'),
+            'empty': (b'', 'x.png', 'The uploaded file is empty.'),
+        }
+        for name, (content, filename, message) in cases.items():
+            with self.subTest(case=name):
+                response = self.upload(content, filename)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(message, response.json['message'])
+        self.assertFalse(os.path.exists(self.api.processing.directory)
+                         and self.stored_files())
+
+    def test_missing_file_field(self):
+        for data in [{}, {'photo': (io.BytesIO(self.PNG), 'a.png')}]:
+            with self.subTest(data=list(data)):
+                response = self.client.post('/measure', data=data,
+                                            content_type='multipart/form-data')
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json['message'],
+                                 'No file was uploaded in the "image" field.')
+
+    def test_same_name_is_not_overwritten(self):
+        for _ in range(3):
+            self.assertEqual(self.upload(self.JPEG, 'photo.jpg').status_code, 200)
+        self.assertEqual(len(self.stored_files()), 3)
+
+    def test_allowed_extensions_from_config(self):
+        config = {'data': [{'key': 'image', 'allowed_extensions': ['.PNG', 'heic']}]}
+        processing = Processing(config=config, format='image', unittest=True)
+        self.assertEqual(processing.allowed_extensions, ['png', 'heic'])
+
+        self.api.processing.allowed_extensions = processing.allowed_extensions
+        self.assertEqual(self.upload(self.PNG, 'a.png').status_code, 200)
+        # Not in the list anymore
+        self.assertEqual(self.upload(self.JPEG, 'a.jpg').status_code, 400)
+        # No known signature: checked by extension only
+        self.assertEqual(self.upload(b'\x00\x00\x00\x18ftypheic', 'a.heic').status_code, 200)
+
+    def test_invalid_allowed_extensions(self):
+        for value in [[], 'jpg', [''], [1]]:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    Processing(config={'data': [{'key': 'image', 'allowed_extensions': value}]},
+                               format='image', unittest=True)
 
 
 class TestStaleData(unittest.TestCase):

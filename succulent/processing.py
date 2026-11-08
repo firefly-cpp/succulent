@@ -28,10 +28,26 @@ class Processing:
         enable_export (bool): Enable collected data export via the API.
         df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
         key (str): The key to retrieve the image file from the request (for 'image' format).
+        allowed_extensions (list): File extensions accepted for uploaded images (for 'image' format).
 
     Raises:
         ValueError: Invalid format is provided.
     """
+
+    # Image types recognised by their content (file signature), mapped to
+    # the file extensions that may be used for them.
+    IMAGE_TYPES = {
+        'jpeg': ('jpg', 'jpeg'),
+        'png': ('png',),
+        'gif': ('gif',),
+        'bmp': ('bmp',),
+        'webp': ('webp',),
+        'tiff': ('tif', 'tiff'),
+    }
+
+    # Extensions accepted for the 'image' format when 'allowed_extensions'
+    # is not set in the configuration.
+    DEFAULT_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tif', 'tiff']
 
     def __init__(self, format, config, unittest=False):
         # Validate format
@@ -91,6 +107,15 @@ class Processing:
         if format == 'image':
             self.key = config['data'][0]['key']
 
+            allowed = config['data'][0].get(
+                'allowed_extensions', self.DEFAULT_IMAGE_EXTENSIONS)
+            if (not isinstance(allowed, list) or not allowed
+                    or not all(isinstance(ext, str) and ext.strip('. ') for ext in allowed)):
+                raise ValueError(
+                    '"allowed_extensions" must be a non-empty list of file extensions, '
+                    'e.g. [\'jpg\', \'png\'].')
+            self.allowed_extensions = [ext.strip().lstrip('.').lower() for ext in allowed]
+
     @staticmethod
     def valid_xml_name(name):
         """Check whether a column name can be used as an XML element name.
@@ -104,6 +129,85 @@ class Processing:
         return (isinstance(name, str)
                 and re.fullmatch(r'[A-Za-z_][\w.\-]*', name, flags=re.ASCII) is not None
                 and not name.lower().startswith('xml'))
+
+    @classmethod
+    def image_type(cls, header):
+        """Detect the image type from the first bytes of a file.
+
+        Args:
+            header (bytes): The first bytes (at least 12) of the file.
+
+        Returns:
+            str or None: One of the keys of ``IMAGE_TYPES``, or None if the
+            content is not a recognised image.
+        """
+        if header.startswith(b'\xff\xd8\xff'):
+            return 'jpeg'
+        if header.startswith(b'\x89PNG\r\n\x1a\n'):
+            return 'png'
+        if header[:6] in (b'GIF87a', b'GIF89a'):
+            return 'gif'
+        if header.startswith(b'BM'):
+            return 'bmp'
+        if header[:4] == b'RIFF' and header[8:12] == b'WEBP':
+            return 'webp'
+        if header[:4] in (b'II*\x00', b'MM\x00*'):
+            return 'tiff'
+        return None
+
+    def check_image(self, file, filename):
+        """Check that an uploaded file is an allowed image.
+
+        The extension must be in ``allowed_extensions``. For known image
+        types (see ``IMAGE_TYPES``), the content must also match: a script
+        renamed to ``.jpg`` is rejected. Extensions without a known
+        signature (e.g. ``heic``), if allowed in the configuration, are
+        checked by extension only. A file without an extension is accepted
+        if its content is an allowed image type, and the matching extension
+        is added (some cameras, e.g. ESP32-CAM, send no filename).
+
+        Args:
+            file (FileStorage): The uploaded file.
+            filename (str): The sanitised filename.
+
+        Raises:
+            ValueError: The file is empty, its extension is not allowed, or
+            its content does not match an allowed image type.
+
+        Returns:
+            str: The filename to store the file under.
+        """
+        header = file.stream.read(16)
+        file.stream.seek(0)
+        if not header:
+            raise ValueError('The uploaded file is empty.')
+
+        detected = self.image_type(header)
+        name, dot, extension = filename.rpartition('.')
+        extension = extension.lower() if dot and name else ''
+
+        allowed = ', '.join(self.allowed_extensions)
+
+        # No extension: name the file after its detected content
+        if not extension:
+            for candidate in self.IMAGE_TYPES.get(detected, ()):
+                if candidate in self.allowed_extensions:
+                    return f'{filename}.{candidate}'
+            raise ValueError(
+                f'The uploaded file is not an allowed image (allowed: {allowed}).')
+
+        if extension not in self.allowed_extensions:
+            raise ValueError(
+                f'File type ".{extension}" is not allowed (allowed: {allowed}).')
+
+        # Known image extension: the content must be of that type
+        expected = [kind for kind, extensions in self.IMAGE_TYPES.items()
+                    if extension in extensions]
+        if expected and detected not in expected:
+            raise ValueError(
+                f'The content of the uploaded file does not match its extension (.{extension}).')
+
+        return filename
 
     def parameters(self):
         """Generate URL parameters based on data columns.
@@ -364,11 +468,16 @@ class Processing:
 
         if self.format == 'image':
             # Retrieve image from request
-            file = req.files[self.key]
+            file = req.files.get(self.key)
+            if file is None:
+                raise ValueError(f'No file was uploaded in the "{self.key}" field.')
 
             filename = secure_filename(file.filename or '')
             if not filename:
                 filename = 'upload'
+
+            # Allowed extension and matching content
+            filename = self.check_image(file, filename)
 
             # Timestamp
             timestamp = now.strftime('%Y-%m-%d_%H%M%S')
@@ -381,6 +490,14 @@ class Processing:
                 os.path.join(directory, f'{timestamp}_{filename}'))
             if os.path.commonpath([directory, destination]) != directory:
                 raise ValueError('Invalid file path.')
+
+            # Do not overwrite an image uploaded with the same name in the
+            # same second; add a counter instead (e.g. ..._photo_1.jpg)
+            base, extension = os.path.splitext(destination)
+            counter = 1
+            while os.path.exists(destination):
+                destination = f'{base}_{counter}{extension}'
+                counter += 1
 
             # Store image to device
             file.save(destination)
