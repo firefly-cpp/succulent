@@ -96,7 +96,7 @@ To store data, send a POST request to ``/measure`` with the values in one of the
 
     curl -X POST http://localhost:8080/measure -H "Content-Type: application/xml" -d '<data><temperature>21.5</temperature><humidity>40</humidity></data>'
 
-A malformed XML body or a JSON body that is not an object is rejected with a ``400`` response. With ``format='xml'``, column names must be valid XML element names: letters, digits, ``_``, ``-`` or ``.``, starting with a letter or ``_``, without spaces, and not starting with ``xml``.
+A malformed XML body or a JSON body that is not an object (or not valid JSON) is rejected with a ``400`` response. All errors are returned as JSON with a ``message`` field, e.g. ``{"message": "Invalid JSON: the request body could not be parsed."}``. With ``format='xml'``, column names must be valid XML element names: letters, digits, ``_``, ``-`` or ``.``, starting with a letter or ``_``, without spaces, and not starting with ``xml``.
 
 To restrict access to the collected data, define the following setting in the ``configuration.yml`` file in the root directory:
 

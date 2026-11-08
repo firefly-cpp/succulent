@@ -671,6 +671,63 @@ class TestImageUpload(unittest.TestCase):
                                format='image', unittest=True)
 
 
+class TestJsonErrors(unittest.TestCase):
+    """
+    Test that errors are returned as JSON instead of HTML pages.
+    """
+
+    def setUp(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
+        self.client = self.api.app.test_client()
+
+    def tearDown(self):
+        shutil.rmtree(self.api.processing.directory, ignore_errors=True)
+
+    def assertJsonError(self, response, status, message):
+        self.assertEqual(response.status_code, status)
+        self.assertEqual(response.content_type, 'application/json')
+        self.assertEqual(response.get_json(), {'message': message})
+
+    def test_invalid_json_body(self):
+        for body in ['{bad', '']:
+            with self.subTest(body=body):
+                response = self.client.post('/measure', data=body,
+                                            content_type='application/json')
+                self.assertJsonError(response, 400,
+                                     'Invalid JSON: the request body could not be parsed.')
+
+    def test_unknown_path(self):
+        self.assertJsonError(self.client.get('/nope'), 404, 'Not Found.')
+
+    def test_method_not_allowed_keeps_allow_header(self):
+        response = self.client.delete('/measure')
+        self.assertJsonError(response, 405, 'Method Not Allowed.')
+        self.assertIn('POST', response.headers['Allow'])
+
+    def test_unexpected_error_is_logged_and_hidden(self):
+        def crash(req):
+            raise RuntimeError('secret internal detail')
+        self.api.processing.process = crash
+
+        with self.assertLogs(self.api.app.logger, level='ERROR') as logs:
+            response = self.client.post('/measure', json={'temperature': 20})
+
+        self.assertJsonError(response, 500, 'Internal server error.')
+        self.assertNotIn('secret', response.get_data(as_text=True))
+        self.assertIn('secret internal detail', '\n'.join(logs.output))
+
+    def test_existing_json_errors_unchanged(self):
+        self.api.app.config['MAX_CONTENT_LENGTH'] = 10
+        response = self.client.post('/measure', data='x' * 100, content_type='application/json')
+        self.assertJsonError(response, 413, 'Payload too large.')
+
+    def test_index_is_still_html(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content_type.startswith('text/html'))
+
+
 class TestStaleData(unittest.TestCase):
     """
     Test that /data and /export do not return stale in-memory data.
