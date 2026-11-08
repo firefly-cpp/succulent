@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>succulent explore · password</title>
+<link rel="stylesheet" href="{{ url_for('explore.static', filename='explore.css') }}">
+</head>
+<body class="login-page">
+<form class="login" method="post" action="{{ url_for('explore.login') }}">
+  <div class="brand">
+    <svg class="logo" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 28V14"></path><path d="M16 18c-5 0-8-3-8-8 5 0 8 3 8 8z"></path><path d="M16 15c0-5 3-8 8-8 0 5-3 8-8 8z"></path><path d="M9 28h14"></path></svg>
+    <p class="title">succulent <span>/ explore</span></p>
+  </div>
+  <div class="stack-6">
+    <h1>This data is password protected</h1>
+    <p class="muted">Enter the password from configuration.yml. It is kept in a session cookie, not in the URL.</p>
+  </div>
+  <div class="field">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+  </div>
+  {% if error %}
+  <p class="alert" role="alert">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+    Wrong password. Try again.
+  </p>
+  {% endif %}
+  <button type="submit" class="btn dark wide">Open dashboard</button>
+  <p class="hint">Devices keep sending data as before.</p>
+</form>
+</body>
+</html>

@@ -85,6 +85,7 @@ The current version of succulent comes packed with exciting features, including,
 - **Effortless data retrieval** from POST requests 📥
 - **Versatile data storage options**, such as CSV, JSON, SQLite, XML, and even images 🗂️📊🖼️
 - **Customisable boundaries for collected data**, allowing you to set minimum and maximum thresholds ⚙️
+- **Web dashboard for exploring the data** with charts, data quality and image gallery (optional) 📊
 
 With succulent, the process of collecting, managing, and preprocessing data becomes a breeze, empowering you to focus on what truly matters—gaining valuable insights from your embedded devices, microcontrollers, and smartwatches. ⌚ So why waste precious time? ⏳ Dive into the world of succulent and unlock the true potential of your data! 💪📈
 
@@ -259,6 +260,30 @@ results:
 ```
 
 To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, send the password as described above. The data will be downloaded in the format specified in the configuration file.
+
+### Data exploration
+succulent includes an optional web dashboard for monitoring the collected data in a browser. To enable it, define the following setting in the `configuration.yml` file in the root directory:
+```yml
+explore:
+  - enable: true # false by default
+  - refresh: 10  # auto-refresh interval in seconds (optional, 0 disables it)
+```
+
+Then navigate to [http://localhost:8080/explore](http://localhost:8080/explore). The dashboard shows:
+
+- the latest value of each column, with its position between `min` and `max`,
+- data quality: the number of measurements, missing values, values outside `min`/`max` and the typical interval between measurements,
+- a chart for each numeric column, with `min` and `max` as dashed lines (long ranges are averaged so the page stays fast),
+- the latest measurements in a table,
+- for the `image` format, a gallery of the uploaded images.
+
+With `timestamp: true`, you can choose the time range (1 h, 24 h, 7 d, 30 d or all). If export is enabled, the data can be downloaded as CSV from the dashboard.
+
+<p align="center"><img alt="succulent explore dashboard" width="800" src=".github/images/explore.png"></p>
+
+If a password is set, the dashboard asks for it once and keeps the session in a cookie, so the password never appears in the URL. Sessions last until the server restarts; to keep them across restarts, set a `secret_key` in the configuration. Scripts can read `/explore/api/data` with the `Authorization: Bearer password` or `X-API-Key: password` header instead.
+
+The dashboard only reads the stored data; data collection works exactly as without it. It needs no internet access (no external scripts or fonts), so it also works on a local network, and values sent by devices are always shown as text.
 
 ## 📄 Cite us
 Fister Jr., Iztok, and Tadej Lahovnik. Succulent. 0.4.0, doi:[10.5281/zenodo.10402365](https://doi.org/10.5281/zenodo.10402365).
