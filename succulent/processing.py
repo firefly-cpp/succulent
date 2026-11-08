@@ -1,4 +1,5 @@
 import os
+import re
 import hmac
 import sqlite3
 import inspect
@@ -59,6 +60,13 @@ class Processing:
             if 'password' in self.columns:
                 raise ValueError(
                     '\"password\" is a reserved keyword and cannot be used as a column name.')
+            if format == 'xml':
+                for column in self.columns:
+                    if not self.valid_xml_name(column):
+                        raise ValueError(
+                            f'"{column}" cannot be used as a column name with the XML format '
+                            '(use letters, digits, "_", "-" or "."; start with a letter or "_"; '
+                            'no spaces; must not start with "xml").')
             self.boundaries = [{
                 configuration['name']: {
                     key: configuration[key]
@@ -82,6 +90,20 @@ class Processing:
 
         if format == 'image':
             self.key = config['data'][0]['key']
+
+    @staticmethod
+    def valid_xml_name(name):
+        """Check whether a column name can be used as an XML element name.
+
+        Args:
+            name (str): The column name.
+
+        Returns:
+            bool: True if the name is a valid XML element name.
+        """
+        return (isinstance(name, str)
+                and re.fullmatch(r'[A-Za-z_][\w.\-]*', name, flags=re.ASCII) is not None
+                and not name.lower().startswith('xml'))
 
     def parameters(self):
         """Generate URL parameters based on data columns.
@@ -127,6 +149,56 @@ class Processing:
                 f'{column} ({value}) is greater than the specified maximum ({boundary["max"]}).')
         return value
 
+    def xml_values(self, req):
+        """Parse an XML request body into a dictionary.
+
+        Each direct child of the root element is one field, e.g.
+        ``<data><temperature>21.5</temperature></data>``. The name of the
+        root element is not checked.
+
+        Args:
+            req (Request): The incoming request object.
+
+        Raises:
+            ValueError: The body is not well-formed XML.
+
+        Returns:
+            dict: Field names mapped to their text values.
+        """
+        try:
+            root = ET.fromstring(req.data)
+        except ET.ParseError as err:
+            raise ValueError(f'Invalid XML: {err}.') from None
+
+        return {child.tag: child.text for child in root}
+
+    def request_values(self, req):
+        """Extract the submitted values from the request.
+
+        Values are read from a JSON object body, from an XML body (for the
+        'xml' format), or otherwise from the query parameters. An XML-format
+        request without a body (e.g. ``POST /measure?temperature=21`` from
+        an ESP32) is read from the query parameters, as for other formats.
+
+        Args:
+            req (Request): The incoming request object.
+
+        Raises:
+            ValueError: The body is not a JSON object, or not well-formed XML.
+
+        Returns:
+            dict: Field names mapped to their values.
+        """
+        if req.is_json:
+            if not isinstance(req.json, dict):
+                raise ValueError('Invalid JSON: the request body must be a JSON object.')
+            return req.json
+
+        if self.format == 'xml' and req.data:
+            return self.xml_values(req)
+
+        return {column: req.args.get(column, default=None) for column in self.columns}
+
     def request_passwords(self, req):
         """Collect all passwords supplied with the request.
 
@@ -134,7 +206,8 @@ class Processing:
 
         - ``Authorization: Bearer <password>`` header,
         - ``X-API-Key: <password>`` header,
-        - ``password`` field in a JSON body,
+        - ``password`` field in a JSON body or ``<password>`` element in an
+          XML body,
         - ``password`` query parameter (kept for backward compatibility;
           prefer a header, since URLs are often written to server logs).
 
@@ -158,8 +231,16 @@ class Processing:
         if api_key:
             passwords.append(api_key)
 
-        if req.is_json and isinstance(req.json, dict) and req.json.get('password') is not None:
-            passwords.append(req.json['password'])
+        if req.is_json:
+            if isinstance(req.json, dict) and req.json.get('password') is not None:
+                passwords.append(req.json['password'])
+        elif self.format == 'xml' and req.data:
+            try:
+                xml_password = self.xml_values(req).get('password')
+            except ValueError:
+                xml_password = None
+            if xml_password is not None:
+                passwords.append(xml_password)
 
         query_password = req.args.get('password', default=None)
         if query_password is not None:
@@ -242,18 +323,12 @@ class Processing:
             else:
                 self.df = pd.DataFrame(columns=self.columns)
 
-            # Parse data from request
+            # Parse data from request (once, before checking the columns)
+            values = self.request_values(req)
+
             data = {}
             for column in self.columns:
-                # Request type
-                if req.is_json:
-                    value = req.json[column] if column in req.json else None
-                elif self.format == 'xml':
-                    root = ET.fromstring(req.data)
-                    data = {child.tag: child.text for child in root}
-                    value = data[column] if column in data else None
-                else:
-                    value = req.args.get(column, default=None)
+                value = values.get(column)
 
                 # Boundary check
                 if column in [list(boundaries.keys())[0] for boundaries in self.boundaries]:
