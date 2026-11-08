@@ -1,8 +1,25 @@
+import json
 import numpy as np
 import pandas as pd
-from flask import Flask, jsonify, request, url_for, make_response
+from flask import Flask, Request, jsonify, request, url_for, make_response
+from werkzeug.exceptions import BadRequest, HTTPException
 from succulent.configuration import Configuration
 from succulent.processing import Processing
+
+
+class SucculentRequest(Request):
+    """Request class with a clear error message for invalid JSON bodies."""
+
+    def on_json_loading_failed(self, e):
+        """Raise a 400 error that says the JSON body could not be parsed.
+
+        Args:
+            e (ValueError or None): The error raised while parsing.
+
+        Raises:
+            BadRequest: Always.
+        """
+        raise BadRequest('Invalid JSON: the request body could not be parsed.')
 
 
 class SucculentAPI:
@@ -48,6 +65,7 @@ class SucculentAPI:
 
         # Initialise Flask
         self.app = Flask(__name__, static_url_path='/succulent/static')
+        self.app.request_class = SucculentRequest
 
         # Limit the maximum accepted size of incoming request bodies to
         # protect the server against oversized or flooding POST requests.
@@ -65,6 +83,11 @@ class SucculentAPI:
                               self.export, methods=['GET'])
         self.app.register_error_handler(
             413, self.payload_too_large)
+
+        # Return every other error as JSON ({"message": ...}) instead of
+        # Flask's default HTML error page, like the API's own errors
+        self.app.register_error_handler(HTTPException, self.http_error)
+        self.app.register_error_handler(Exception, self.internal_error)
 
     def index(self):
         """Generate index HTML page with information about the API.
@@ -167,6 +190,44 @@ class SucculentAPI:
             Response: JSON response with an error message.
         """
         return jsonify({'message': 'Payload too large.'}), 413
+
+    def http_error(self, error):
+        """Return an HTTP error (e.g. 400, 404, 405) as JSON.
+
+        Headers of the error are kept, e.g. ``Allow`` for 405 responses.
+
+        Args:
+            error (HTTPException): The raised HTTP error.
+
+        Returns:
+            Response: JSON response with an error message.
+        """
+        # Short message (e.g. "Not Found.") instead of Werkzeug's generic
+        # description; a specific description (e.g. invalid JSON) is kept
+        if error.description and error.description != type(error).description:
+            message = error.description
+        else:
+            message = f'{error.name}.'
+
+        response = error.get_response()
+        response.data = json.dumps({'message': message})
+        response.content_type = 'application/json'
+        return response
+
+    def internal_error(self, error):
+        """Return an unexpected error as a JSON 500 response.
+
+        The error is logged with its traceback. Its details are not sent to
+        the client.
+
+        Args:
+            error (Exception): The unexpected error.
+
+        Returns:
+            Response: JSON response with an error message.
+        """
+        self.app.logger.exception('Unexpected error on %s %s', request.method, request.path)
+        return jsonify({'message': 'Internal server error.'}), 500
 
     def start(self):
         """Start the Flask application on the specified host and port.
