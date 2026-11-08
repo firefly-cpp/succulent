@@ -485,6 +485,91 @@ class TestXmlResults(unittest.TestCase):
                          ['temperature,humidity', '21.5,40', '22.0,45'])
 
 
+class TestXmlRequests(unittest.TestCase):
+    """
+    Test case for submitting data with the XML format.
+    """
+
+    def setUp(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'password.yml')
+        self.api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='xml')
+        self.client = self.api.app.test_client()
+        self.xml = {'Content-Type': 'application/xml'}
+        self.key = {'X-API-Key': 's3cret'}
+
+    def tearDown(self):
+        shutil.rmtree(self.api.processing.directory, ignore_errors=True)
+
+    def last_row(self):
+        return self.api.processing.df.iloc[-1].to_dict()
+
+    def test_malformed_xml_returns_400(self):
+        for body in ['<data><temperature>21', 'hello', '<data></wrong>']:
+            with self.subTest(body=body):
+                response = self.client.post('/measure', data=body,
+                                            headers={**self.xml, **self.key})
+                self.assertEqual(response.status_code, 400)
+                self.assertTrue(response.json['message'].startswith('Invalid XML:'))
+
+    def test_query_parameters_without_body(self):
+        # ESP32-style request: no body, values in the query string
+        response = self.client.post('/measure?temperature=20&humidity=40',
+                                    headers=self.key)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.last_row(), {'temperature': '20', 'humidity': '40'})
+
+    def test_xml_body_without_content_type(self):
+        response = self.client.post(
+            '/measure', data='<data><temperature>24</temperature></data>', headers=self.key)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.last_row()['temperature'], '24')
+
+    def test_password_element_in_xml_body(self):
+        response = self.client.post(
+            '/measure', headers=self.xml,
+            data='<data><temperature>22</temperature><password>s3cret</password></data>')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('password', self.api.processing.df.columns)
+
+        response = self.client.post(
+            '/measure', headers=self.xml,
+            data='<data><temperature>22</temperature><password>wrong</password></data>')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'Unauthorised access.')
+
+    def test_json_body_with_xml_format(self):
+        response = self.client.post('/measure', json={'temperature': 23}, headers=self.key)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.last_row()['temperature'], 23)
+
+    def test_invalid_column_names(self):
+        for name in ['my temp', '1st', 'xmlvalue', 'a/b']:
+            with self.subTest(name=name):
+                with self.assertRaises(ValueError):
+                    Processing(config={'data': [{'name': name}]}, format='xml', unittest=True)
+
+        # Valid names, and names that are only invalid for XML in other formats
+        Processing(config={'data': [{'name': n} for n in ['temp.c', 'hum-1', '_x']]},
+                   format='xml', unittest=True)
+        Processing(config={'data': [{'name': 'my temp'}]}, format='csv', unittest=True)
+
+
+class TestJsonRequests(unittest.TestCase):
+    """
+    Test case for JSON request bodies that are not objects.
+    """
+
+    def test_non_object_json_returns_400(self):
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configuration.yml')
+        api = SucculentAPI(host='0.0.0.0', port=8080, config=config_path, format='csv')
+        for body in [[1, 2], 'text', 5]:
+            with self.subTest(body=body):
+                response = api.app.test_client().post('/measure', json=body)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json['message'],
+                                 'Invalid JSON: the request body must be a JSON object.')
+
+
 class TestStaleData(unittest.TestCase):
     """
     Test that /data and /export do not return stale in-memory data.

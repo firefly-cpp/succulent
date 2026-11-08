@@ -211,6 +211,17 @@ timestamp: true # false by default
 
 To access the URL for data collection, send a GET request (or navigate) to [http://localhost:8080/measure](http://localhost:8080/measure).
 
+To store data, send a POST request to `/measure` with the values in one of the following ways:
+
+- query parameters, e.g. `POST /measure?temperature=21.5&humidity=40` (works with every format),
+- a JSON object body, e.g. `{"temperature": 21.5, "humidity": 40}` (works with every format),
+- an XML body (with `format='xml'`), where each child of the root element is one value; the name of the root element is not checked:
+  ```sh
+  curl -X POST http://localhost:8080/measure -H "Content-Type: application/xml" -d '<data><temperature>21.5</temperature><humidity>40</humidity></data>'
+  ```
+
+A malformed XML body or a JSON body that is not an object is rejected with a `400` response. With `format='xml'`, column names must be valid XML element names: letters, digits, `_`, `-` or `.`, starting with a letter or `_`, without spaces, and not starting with `xml`.
+
 To restrict access to the collected data, define the following setting in the `configuration.yml` file in the root directory:
 ```yml
 password: 'password' # Password for data access
@@ -220,7 +231,7 @@ The password can be sent with any request (`/measure`, `/data` and `/export`) in
 
 - `Authorization: Bearer password` header (recommended),
 - `X-API-Key: password` header,
-- `"password": "password"` field in a JSON body (`/measure` only),
+- `"password": "password"` field in a JSON body or `<password>password</password>` element in an XML body (`/measure` only),
 - `?password=password` query parameter (supported for backward compatibility).
 
 Prefer one of the headers, since URLs (including query parameters) are often written to server and proxy logs. For example:
