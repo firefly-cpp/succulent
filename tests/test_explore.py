@@ -100,7 +100,10 @@ class TestExplorePage(ExploreTestCase):
 
         for asset in ['explore.js', 'explore.css']:
             with self.subTest(asset=asset):
-                self.assertEqual(self.client.get(f'/explore/static/{asset}').status_code, 200)
+                response = self.client.get(f'/explore/static/{asset}')
+                self.assertEqual(response.status_code, 200)
+                expected = 'application/javascript' if asset.endswith('.js') else 'text/css'
+                self.assertTrue(response.content_type.startswith(expected))
 
     def test_security_headers(self):
         response = self.client.get('/explore')

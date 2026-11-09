@@ -76,10 +76,12 @@ class Explorer:
         self.blueprint = Blueprint(
             'explore', __name__,
             template_folder='explore_templates',
-            static_folder='explore_static',
+            static_folder=None,
             static_url_path='/explore/static')
 
         bp = self.blueprint
+        bp.add_url_rule('/explore/static/<path:filename>', 'static', self.static,
+                        methods=['GET'])
         bp.add_url_rule('/explore', 'page', self.page, methods=['GET'])
         bp.add_url_rule('/explore/login', 'login', self.login, methods=['GET', 'POST'])
         bp.add_url_rule('/explore/logout', 'logout', self.logout, methods=['POST'])
@@ -206,6 +208,17 @@ class Explorer:
     # ------------------------------------------------------------------
     # Pages
     # ------------------------------------------------------------------
+
+    def static(self, filename):
+        """Serve dashboard assets with explicit browser-safe MIME types."""
+        mimetypes = {
+            'css': 'text/css; charset=utf-8',
+            'js': 'application/javascript; charset=utf-8',
+        }
+        extension = filename.rpartition('.')[2].lower()
+        return send_from_directory(
+            os.path.join(os.path.dirname(__file__), 'explore_static'), filename,
+            mimetype=mimetypes.get(extension))
 
     def page(self):
         """Show the dashboard.
