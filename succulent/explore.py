@@ -10,6 +10,7 @@ Example configuration::
       - enable: true
       - refresh: 10   # auto-refresh interval in seconds (optional)
 """
+import hashlib
 import hmac
 import math
 import os
@@ -135,12 +136,27 @@ class Explorer:
         """
         return cls.settings(config.get('explore')).get('enable') is True
 
+    def session_key(self):
+        """Create the secret key for the dashboard's session cookie.
+
+        Returns:
+            str: A key derived from the password (the same in every server
+            process), or a random key if no password is set.
+        """
+        if not self.processing.password:
+            return secrets.token_hex(32)
+        return hmac.new(str(self.processing.password).encode('utf-8'),
+                        b'succulent explore session key', hashlib.sha256).hexdigest()
+
     def register(self, app):
         """Register the dashboard routes on a Flask application.
 
-        A random secret key is set for the session cookie if the
-        application has none. Sessions then last until the server
-        restarts; set ``secret_key`` in the configuration to keep them.
+        If the application has no secret key for the session cookie, one is
+        derived from the password, so every process of the server (e.g.
+        several gunicorn workers) accepts the same sessions, and changing
+        the password ends all sessions. Without a password no session is
+        needed and a random key is used. Set ``secret_key`` in the
+        configuration to choose the key yourself.
 
         Args:
             app (Flask): The Flask application.
@@ -149,7 +165,7 @@ class Explorer:
             None
         """
         if not app.secret_key:
-            app.secret_key = secrets.token_hex(32)
+            app.secret_key = self.session_key()
         app.config.setdefault('SESSION_COOKIE_SAMESITE', 'Lax')
         app.config.setdefault('SESSION_COOKIE_HTTPONLY', True)
         app.register_blueprint(self.blueprint)
@@ -317,7 +333,7 @@ class Explorer:
         Returns:
             The value as a JSON-safe Python type (missing values as None).
         """
-        if value is None:
+        if value is None or value is pd.NaT:
             return None
         if isinstance(value, (pd.Timestamp, datetime)):
             return value.strftime('%Y-%m-%d %H:%M:%S')
@@ -364,7 +380,10 @@ class Explorer:
         times = None
         if has_time and 'timestamp' in df.columns and len(df):
             times = pd.to_datetime(df['timestamp'], errors='coerce')
-            df = df.assign(_time=times).sort_values('_time', kind='stable')
+            # Rows without a timestamp (e.g. stored before 'timestamp' was
+            # enabled) are the oldest: keep them first, in file order. They
+            # are only included in the 'all' range.
+            df = df.assign(_time=times).sort_values('_time', kind='stable', na_position='first')
             span = self.RANGES[selected]
             if span is not None and df['_time'].notna().any():
                 df = df[df['_time'] >= df['_time'].max() - span]
@@ -410,8 +429,13 @@ class Explorer:
             for item in info:
                 if item['numeric']:
                     numbers = pd.to_numeric(df[item['name']], errors='coerce').reset_index(drop=True)
-                    means = numbers.groupby(groups).mean()
-                    series['values'][item['name']] = [self.clean(v) for v in means]
+                    grouped = numbers.groupby(groups)
+                    series['values'][item['name']] = [self.clean(v) for v in grouped.mean()]
+                    if bucket > 1:
+                        # Lowest and highest value per point, so short spikes
+                        # (e.g. outside min/max) stay visible when averaged
+                        series.setdefault('low', {})[item['name']] = [self.clean(v) for v in grouped.min()]
+                        series.setdefault('high', {})[item['name']] = [self.clean(v) for v in grouped.max()]
 
         # Latest raw rows, newest first
         shown = ['timestamp'] if has_time and 'timestamp' in df.columns else []

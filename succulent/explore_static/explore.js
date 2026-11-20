@@ -348,6 +348,9 @@
 
   function renderChart(column, data) {
     var values = data.series.values[column.name] || [];
+    // With averaged points, the lowest and highest value of each point
+    var lows = (data.series.low || {})[column.name] || values;
+    var highs = (data.series.high || {})[column.name] || values;
     var present = values.filter(isNumber);
     var card = el('div', 'card chart');
     var outsideText = column.outside ? ' · ' + column.outside + ' outside' : '';
@@ -363,8 +366,8 @@
       return card;
     }
 
-    var dataLo = Math.min.apply(null, present.concat(isNumber(column.min) ? [column.min] : []));
-    var dataHi = Math.max.apply(null, present.concat(isNumber(column.max) ? [column.max] : []));
+    var dataLo = Math.min.apply(null, lows.filter(isNumber).concat(isNumber(column.min) ? [column.min] : []));
+    var dataHi = Math.max.apply(null, highs.filter(isNumber).concat(isNumber(column.max) ? [column.max] : []));
     var padding = (dataHi - dataLo) * 0.08 || Math.max(Math.abs(dataHi) * 0.1, 1);
     // Do not go below zero for values that are never negative (e.g. light)
     var scale = niceScale(dataLo >= 0 ? Math.max(0, dataLo - padding) : dataLo - padding, dataHi + padding);
@@ -393,6 +396,21 @@
     if (isNumber(column.max)) boundPath += 'M0 ' + y(column.max).toFixed(1) + ' L1000 ' + y(column.max).toFixed(1) + ' ';
     if (isNumber(column.min)) boundPath += 'M0 ' + y(column.min).toFixed(1) + ' L1000 ' + y(column.min).toFixed(1);
     if (boundPath) svg.appendChild(svgEl('path', { d: boundPath.trim(), fill: 'none', 'stroke-width': '1.5', 'vector-effect': 'non-scaling-stroke', 'class': 'bound-line' }));
+    if (lows !== values) {
+      // Band from the lowest to the highest value of each averaged point
+      var band = '', top = [], bottom = [];
+      var flush = function () {
+        if (top.length) band += 'M' + top.join(' L') + ' L' + bottom.reverse().join(' L') + ' Z ';
+        top = []; bottom = [];
+      };
+      values.forEach(function (v, i) {
+        if (!isNumber(lows[i]) || !isNumber(highs[i])) { flush(); return; }
+        top.push(x(i).toFixed(1) + ' ' + y(highs[i]).toFixed(1));
+        bottom.push(x(i).toFixed(1) + ' ' + y(lows[i]).toFixed(1));
+      });
+      flush();
+      if (band) svg.appendChild(svgEl('path', { d: band.trim(), 'class': 'band' }));
+    }
     svg.appendChild(svgEl('path', { d: d.trim(), fill: 'none', 'stroke-width': '2', 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke', 'class': 'series' }));
     plot.appendChild(svg);
 
@@ -403,15 +421,18 @@
       plot.appendChild(label);
     });
 
-    values.forEach(function (v, i) {
-      if (!isNumber(v)) return;
-      var out = (isNumber(column.max) && v > column.max) || (isNumber(column.min) && v < column.min);
-      if (!out) return;
+    // Mark values outside min/max. For averaged points, the lowest and
+    // highest value are checked, so short spikes are not lost.
+    var mark = function (v, i) {
       var dot = el('span', 'outlier');
       dot.style.left = (x(i) / 10).toFixed(2) + '%';
       dot.style.top = (y(v) / 3).toFixed(2) + '%';
       dot.title = column.name + ' ' + fmtCol(v, column) + ' · ' + xLabel(data.series.x[i], data);
       plot.appendChild(dot);
+    };
+    values.forEach(function (v, i) {
+      if (isNumber(column.max) && isNumber(highs[i]) && highs[i] > column.max) mark(highs[i], i);
+      if (isNumber(column.min) && isNumber(lows[i]) && lows[i] < column.min) mark(lows[i], i);
     });
 
     var ticks = el('div', 'ticks');
@@ -424,7 +445,7 @@
       labels.appendChild(el('span', null, xs.length ? xLabel(xs[Math.round(f * (xs.length - 1))], data) : ''));
     });
     card.appendChild(labels);
-    if (data.bucket > 1) card.appendChild(el('p', 'note', 'Averaged over ' + data.bucket + ' measurements per point.'));
+    if (data.bucket > 1) card.appendChild(el('p', 'note', 'Averaged over up to ' + data.bucket + ' measurements per point; the band shows their lowest and highest value.'));
     return card;
   }
 

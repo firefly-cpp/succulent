@@ -220,6 +220,65 @@ class TestExploreData(ExploreTestCase):
         self.assertEqual(data['series']['values']['temperature'][0], 4.5)
         self.assertEqual(len(data['table']['rows']), 10)
         self.assertEqual(data['interval'], 60.0)
+        # Lowest and highest value per averaged point
+        self.assertEqual(data['series']['low']['temperature'][0], 0)
+        self.assertEqual(data['series']['high']['temperature'][0], 9)
+
+    def test_short_spike_is_kept_when_averaged(self):
+        # One value above max (30) among normal ones: the average stays in
+        # range, but the highest value of that point shows the spike
+        self.api.explorer.MAX_POINTS = 10
+        start = datetime.now() - timedelta(hours=10)
+        self.write_rows([{'temperature': 99 if i == 42 else 20, 'humidity': 1, 'status': 'x',
+                          'timestamp': (start + timedelta(minutes=i)).strftime('%Y-%m-%d %H:%M:%S')}
+                         for i in range(100)])
+        data = strict_json(self.client.get('/explore/api/data?range=all'))
+        temperature = {c['name']: c for c in data['columns']}['temperature']
+        self.assertEqual(temperature['outside'], 1)
+        self.assertLessEqual(max(data['series']['values']['temperature']), 30)
+        self.assertEqual(data['series']['high']['temperature'][4], 99)
+
+    def test_no_low_high_without_averaging(self):
+        self.client.post('/measure', json={'temperature': 20})
+        data = strict_json(self.client.get('/explore/api/data'))
+        self.assertEqual(data['bucket'], 1)
+        self.assertNotIn('low', data['series'])
+        self.assertNotIn('high', data['series'])
+
+    def test_rows_without_timestamp(self):
+        # 'timestamp' enabled later: older rows have no time
+        now = datetime.now().replace(microsecond=0)
+        self.write_rows([
+            {'temperature': 18, 'humidity': 1, 'status': 'old', 'timestamp': None},
+            {'temperature': 19, 'humidity': None, 'status': 'old', 'timestamp': None},
+            {'temperature': 20, 'humidity': None, 'status': 'new',
+             'timestamp': (now - timedelta(minutes=20)).strftime('%Y-%m-%d %H:%M:%S')},
+            {'temperature': 21, 'humidity': None, 'status': 'new',
+             'timestamp': (now - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')},
+        ])
+        for selected, count in [('all', 4), ('24h', 2), ('1h', 2)]:
+            with self.subTest(range=selected):
+                response = self.client.get(f'/explore/api/data?range={selected}')
+                self.assertEqual(response.status_code, 200)
+                data = strict_json(response)
+                self.assertEqual(data['count'], count)
+                self.assertEqual(data['last_time'], (now - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S'))
+                # Newest first: the rows with a timestamp come first
+                self.assertEqual(data['table']['rows'][0]['temperature'], 21)
+
+        data = strict_json(self.client.get('/explore/api/data?range=all'))
+        humidity = {c['name']: c for c in data['columns']}['humidity']
+        # The last humidity value is in a row without a timestamp
+        self.assertEqual(humidity['last_valid'], 1)
+        self.assertIsNone(humidity['last_valid_time'])
+        self.assertEqual([r['timestamp'] for r in data['table']['rows']][-1], None)
+        self.assertEqual(data['series']['x'][:2], [None, None])
+
+    def test_only_rows_without_timestamp(self):
+        self.write_rows([{'temperature': 18, 'humidity': 1, 'status': 'a', 'timestamp': None}])
+        response = self.client.get('/explore/api/data?range=all')
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(strict_json(response)['last_time'])
 
     def test_export(self):
         self.client.post('/measure', json={'temperature': 20})
@@ -278,6 +337,29 @@ class TestExplorePassword(ExploreTestCase):
     def test_secret_key_from_config(self):
         api, client = self.make_api(dict(TABLE_CONFIG, password='x', secret_key='fixed-key'))
         self.assertEqual(api.app.secret_key, 'fixed-key')
+
+    def test_session_works_across_processes(self):
+        # Several gunicorn workers each create their own app: a session from
+        # one must be accepted by another
+        other, other_client = self.make_api(dict(TABLE_CONFIG, password='s3cret'))
+        self.assertEqual(self.api.app.secret_key, other.app.secret_key)
+
+        self.client.post('/explore/login', data={'password': 's3cret'})
+        cookie = self.client.get_cookie('session')
+        other_client.set_cookie('session', cookie.value)
+        self.assertEqual(other_client.get('/explore/api/data').status_code, 200)
+
+    def test_new_password_ends_sessions(self):
+        changed, changed_client = self.make_api(dict(TABLE_CONFIG, password='new'))
+        self.assertNotEqual(self.api.app.secret_key, changed.app.secret_key)
+
+        self.client.post('/explore/login', data={'password': 's3cret'})
+        changed_client.set_cookie('session', self.client.get_cookie('session').value)
+        self.assertEqual(changed_client.get('/explore/api/data').status_code, 401)
+
+    def test_key_is_not_the_password(self):
+        self.assertNotIn('s3cret', self.api.app.secret_key)
+        self.assertEqual(len(self.api.app.secret_key), 64)
 
 
 class TestExploreImages(ExploreTestCase):
