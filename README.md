@@ -281,7 +281,7 @@ With `timestamp: true`, you can choose the time range (1 h, 24 h, 7 d, 30 d or a
 
 <p align="center"><img alt="succulent explore dashboard" width="800" src=".github/images/explore.png"></p>
 
-If a password is set, the dashboard asks for it once and keeps the session in a cookie, so the password never appears in the URL. Sessions last until the server restarts; to keep them across restarts, set a `secret_key` in the configuration. Scripts can read `/explore/api/data` with the `Authorization: Bearer password` or `X-API-Key: password` header instead.
+If a password is set, the dashboard asks for it once and keeps the session in a cookie, so the password never appears in the URL. Sessions stay valid across restarts and in every server process (e.g. several gunicorn workers); changing the password ends them. To choose the key for the session cookie yourself, set a `secret_key` in the configuration. Scripts can read `/explore/api/data` with the `Authorization: Bearer password` or `X-API-Key: password` header instead.
 
 The dashboard only reads the stored data; data collection works exactly as without it. It needs no internet access (no external scripts or fonts), so it also works on a local network, and values sent by devices are always shown as text.
 

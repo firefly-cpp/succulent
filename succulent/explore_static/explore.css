@@ -299,6 +299,7 @@ a { color: var(--accent); }
 .grid-line { stroke: var(--line); }
 .bound-line { stroke: var(--bound); stroke-dasharray: 6 5; }
 .series { stroke: var(--accent); }
+.band { fill: var(--accent); fill-opacity: 0.14; stroke: none; }
 
 .bound-label {
   position: absolute;
