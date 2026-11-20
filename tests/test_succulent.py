@@ -817,6 +817,16 @@ class TestVersion(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertEqual(__version__, match.group(1))
 
+    def test_public_api(self):
+        import succulent
+        from succulent.api import SucculentAPI as FromModule
+
+        self.assertEqual(sorted(succulent.__all__),
+                         ['Configuration', 'Explorer', 'Processing', 'SucculentAPI'])
+        for name in succulent.__all__:
+            self.assertTrue(hasattr(succulent, name), name)
+        self.assertIs(succulent.SucculentAPI, FromModule)
+
 
 class TestConfiguration(unittest.TestCase):
     """
