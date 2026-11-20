@@ -1,6 +1,12 @@
 from succulent.configuration import Configuration
+from succulent.processing import Processing
+from succulent.explore import Explorer
+from succulent.api import SucculentAPI
 
 __all__ = [
-    'Configuration']
+    'Configuration',
+    'Explorer',
+    'Processing',
+    'SucculentAPI']
 
 __version__ = '0.5.1'

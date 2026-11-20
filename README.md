@@ -259,7 +259,7 @@ results:
   - export: true # false by default
 ```
 
-To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, send the password as described above. The data will be downloaded in the format specified in the configuration file.
+To export the data, send a GET request (or navigate) to [http://localhost:8080/export](http://localhost:8080/export). To export password-protected data, send the password as described above. The data is downloaded as a CSV file (`data.csv`), whichever storage format (`csv`, `json`, `sqlite` or `xml`) you use. Exporting is not available for the `image` format.
 
 ### Data exploration
 succulent includes an optional web dashboard for monitoring the collected data in a browser. To enable it, define the following setting in the `configuration.yml` file in the root directory:
