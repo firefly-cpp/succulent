@@ -163,7 +163,7 @@ class SucculentAPI:
             Response: JSON response with the stored data.
         """
         data = self.processing.data(request)
-        if data['valid'] == False:
+        if not data['valid']:
             return jsonify({'message': data['message']}), data.get('code', 400)
 
         # Missing values (NaN) and infinities are not valid JSON, so send them
@@ -177,7 +177,7 @@ class SucculentAPI:
         """Export the stored data to a CSV file.
         """
         data = self.processing.export(request)
-        if data['valid'] == False:
+        if not data['valid']:
             return jsonify({'message': data['message']}), data.get('code', 400)
 
         # Convert DataFrame to CSV
