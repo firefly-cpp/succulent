@@ -92,7 +92,8 @@ class Processing:
             } for configuration in config['data'] if configuration.get('min') is not None or configuration.get('max') is not None]
 
             if 'timestamp' in config:
-                if config['timestamp'] == True:
+                # Only the YAML value true enables it (not e.g. the string 'false')
+                if config['timestamp'] == True:  # noqa: E712
                     self.timestamp = True
 
             if 'results' in config:

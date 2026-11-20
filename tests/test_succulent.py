@@ -1,5 +1,6 @@
 from succulent import __version__
 import pandas as pd
+import re
 import unittest
 import io
 import json
@@ -802,6 +803,19 @@ class TestDataJson(unittest.TestCase):
         response = client.get('/data', headers=headers)
         data = self.strict_json(response.data.decode())['data']
         self.assertIsNone(data[0]['humidity'])
+
+
+class TestVersion(unittest.TestCase):
+    """
+    The package version must match the version in pyproject.toml.
+    """
+
+    def test_version_matches_pyproject(self):
+        pyproject = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'pyproject.toml')
+        with open(pyproject, encoding='utf-8') as f:
+            match = re.search(r'^version = "([^"]+)"', f.read(), flags=re.MULTILINE)
+        self.assertIsNotNone(match)
+        self.assertEqual(__version__, match.group(1))
 
 
 class TestConfiguration(unittest.TestCase):

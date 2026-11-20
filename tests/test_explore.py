@@ -140,7 +140,10 @@ class TestExploreData(ExploreTestCase):
         # /measure rejects values outside min/max, so the out-of-range row is
         # written directly (as for data stored before the limits were set)
         now = datetime.now()
-        stamp = lambda minutes: (now - timedelta(minutes=minutes)).strftime('%Y-%m-%d %H:%M:%S')
+
+        def stamp(minutes):
+            return (now - timedelta(minutes=minutes)).strftime('%Y-%m-%d %H:%M:%S')
+
         self.write_rows([
             {'temperature': 20, 'humidity': 40, 'status': 'ok', 'timestamp': stamp(20)},
             {'temperature': 35, 'humidity': 41, 'status': 'ok', 'timestamp': stamp(10)},
