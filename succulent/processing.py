@@ -1,8 +1,11 @@
 import os
 import re
 import hmac
+import json
+import time
 import sqlite3
 import inspect
+from contextlib import contextmanager
 import xml.etree.ElementTree as ET
 import pandas as pd
 from datetime import datetime
@@ -26,7 +29,8 @@ class Processing:
         timestamp (bool): Enable timestamp storage for the data collection.
         enable_results (bool): Enable access to the collected data via the API.
         enable_export (bool): Enable collected data export via the API.
-        df (pandas.DataFrame): The DataFrame to hold the data (for 'csv', 'json', and 'sqlite' formats).
+        df (pandas.DataFrame): The data for the table formats: after a measurement, the stored row
+            (all data only when the file had to be rewritten); after /data or /export, all data.
         key (str): The key to retrieve the image file from the request (for 'image' format).
         allowed_extensions (list): File extensions accepted for uploaded images (for 'image' format).
 
@@ -379,6 +383,218 @@ class Processing:
         ]
         return any(matches)
 
+    @contextmanager
+    def storage_lock(self, timeout=30):
+        """Lock the stored data while it is written or read.
+
+        Uses a lock file next to the data file, so it works between threads
+        and between processes (e.g. several gunicorn workers), on Linux,
+        macOS and Windows.
+
+        Args:
+            timeout (float): Seconds to wait for the lock (Windows only;
+                elsewhere the wait is not limited).
+
+        Raises:
+            TimeoutError: The lock was not released in time.
+
+        Yields:
+            None
+        """
+        os.makedirs(self.directory, exist_ok=True)
+        lock_path = os.path.join(self.directory, f'.data.{self.format}.lock')
+        with open(lock_path, 'a+b') as handle:
+            if os.name == 'nt':
+                import msvcrt
+                deadline = time.monotonic() + timeout
+                while True:
+                    try:
+                        handle.seek(0)
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                        break
+                    except OSError:
+                        if time.monotonic() > deadline:
+                            raise TimeoutError('The stored data is locked by another request.') from None
+                        time.sleep(0.02)
+                try:
+                    yield
+                finally:
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(handle, fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    fcntl.flock(handle, fcntl.LOCK_UN)
+
+    def load(self, path):
+        """Read all stored data of a table format.
+
+        Args:
+            path (str): Path to the data file.
+
+        Returns:
+            pandas.DataFrame: The stored data (empty if there is none).
+        """
+        if not os.path.exists(path) or os.path.getsize(path) == 0:
+            return pd.DataFrame()
+        if self.format == 'csv':
+            return pd.read_csv(path, sep=',')
+        if self.format == 'json':
+            return pd.read_json(path, orient='records')
+        if self.format == 'xml':
+            return pd.read_xml(path)
+        if self.format == 'sqlite':
+            conn = sqlite3.connect(path)
+            try:
+                return pd.read_sql_query('SELECT * FROM data', conn)
+            finally:
+                conn.close()
+        raise ValueError(f'Invalid file type: {self.format}')
+
+    def rewrite(self, path, row):
+        """Store a row by reading all data and writing the whole file again.
+
+        Used for the json and xml formats, and for csv and sqlite when the
+        stored columns do not include all configured columns (e.g. after a
+        column was added to the configuration).
+
+        Args:
+            path (str): Path to the data file.
+            row (pandas.DataFrame): The new row.
+
+        Returns:
+            None
+        """
+        existing = self.load(path)
+        if existing.empty and not len(existing.columns):
+            existing = pd.DataFrame(columns=self.columns)
+        self.df = pd.concat([existing, row], ignore_index=True)
+
+        if self.format == 'csv':
+            self.df.to_csv(path, sep=',', index=False)
+        elif self.format == 'json':
+            self.df.to_json(path, orient='records', indent=4)
+        elif self.format == 'xml':
+            self.df.to_xml(path, index=False)
+        elif self.format == 'sqlite':
+            conn = sqlite3.connect(path)
+            try:
+                self.df.to_sql('data', conn, if_exists='replace', index=False)
+            finally:
+                conn.close()
+
+    def append_csv(self, path, row):
+        """Append a row to the CSV file without reading the stored data.
+
+        Only the header is read. If the file is new or empty, it is created
+        with a header. If the header lacks a configured column, the file is
+        rewritten once with the new column (see :meth:`rewrite`).
+
+        Args:
+            path (str): Path to the CSV file.
+            row (pandas.DataFrame): The new row.
+
+        Returns:
+            None
+        """
+        if not os.path.exists(path) or os.path.getsize(path) == 0:
+            row.to_csv(path, sep=',', index=False)
+            self.df = row.reset_index(drop=True)
+            return
+
+        try:
+            header = list(pd.read_csv(path, sep=',', nrows=0).columns)
+        except (pd.errors.EmptyDataError, pd.errors.ParserError):
+            header = []
+        if not header or not set(row.columns) <= set(header) or len(set(header)) != len(header):
+            self.rewrite(path, row)
+            return
+
+        # Same order as the file; stored columns no longer configured stay empty
+        row = row.reindex(columns=header)
+
+        # Make sure the new row starts on its own line
+        with open(path, 'rb') as f:
+            f.seek(-1, os.SEEK_END)
+            ends_with_newline = f.read(1) == b'\n'
+        if not ends_with_newline:
+            with open(path, 'a', newline='') as f:
+                f.write(os.linesep)
+
+        row.to_csv(path, sep=',', index=False, header=False, mode='a')
+        self.df = row.reset_index(drop=True)
+
+    @staticmethod
+    def quote_identifier(name):
+        """Quote a column name for use in an SQL statement.
+
+        Args:
+            name (str): The column name.
+
+        Returns:
+            str: The quoted name.
+        """
+        return '"' + str(name).replace('"', '""') + '"'
+
+    @staticmethod
+    def sqlite_value(value):
+        """Convert a value to a type SQLite can store.
+
+        Args:
+            value: A value from the request.
+
+        Returns:
+            The value as None, int, float, str or bytes.
+        """
+        if value is None:
+            return None
+        if isinstance(value, float) and value != value:
+            return None
+        if isinstance(value, (bool, int, float, str, bytes)):
+            return value
+        if isinstance(value, (list, dict)):
+            return json.dumps(value)
+        if pd.isna(value):
+            return None
+        return str(value)
+
+    def append_sqlite(self, path, row):
+        """Insert a row into the SQLite table without reading the stored data.
+
+        If the table is new, it is created. If it lacks a configured column,
+        the column is added (``ALTER TABLE``). New columns have no declared
+        type, so each value keeps the type it was sent with (a first
+        measurement with a missing value does not make the column text).
+
+        Args:
+            path (str): Path to the SQLite database.
+            row (pandas.DataFrame): The new row.
+
+        Returns:
+            None
+        """
+        conn = sqlite3.connect(path, timeout=30)
+        try:
+            columns = [info[1] for info in conn.execute('PRAGMA table_info(data)')]
+            with conn:
+                if not columns:
+                    names = ', '.join(self.quote_identifier(c) for c in row.columns)
+                    conn.execute(f'CREATE TABLE data ({names})')
+                    columns = list(row.columns)
+                for column in row.columns:
+                    if column not in columns:
+                        conn.execute(f'ALTER TABLE data ADD COLUMN {self.quote_identifier(column)}')
+                names = ', '.join(self.quote_identifier(c) for c in row.columns)
+                marks = ', '.join('?' for _ in row.columns)
+                values = [self.sqlite_value(v) for v in row.iloc[0].tolist()]
+                conn.execute(f'INSERT INTO data ({names}) VALUES ({marks})', values)
+            self.df = row.reset_index(drop=True)
+        finally:
+            conn.close()
+
     def process(self, req):
         """Process the incoming request and store the data accordingly.
 
@@ -397,8 +613,8 @@ class Processing:
         now = datetime.now()
 
         # Directory preparation
-        if not os.path.exists(self.directory):
-            os.makedirs(self.directory)
+        # exist_ok: several processes may create it at the same time
+        os.makedirs(self.directory, exist_ok=True)
 
         # Password check
         if not self.authorised(req):
@@ -409,24 +625,6 @@ class Processing:
             path = os.path.join(
                 self.directory, f'data.{self.format}'
             )
-
-            # Load existing data
-            if os.path.exists(path):
-                if self.format == 'csv':
-                    self.df = pd.read_csv(path, sep=',')
-                elif self.format == 'json':
-                    self.df = pd.read_json(path, orient='records')
-                elif self.format == 'sqlite':
-                    conn = sqlite3.connect(path)
-                    self.df = pd.read_sql_query('SELECT * FROM data', conn)
-                    conn.close()
-                elif self.format == 'xml':
-                    self.df = pd.read_xml(path)
-                else:
-                    raise ValueError(f'Invalid file type: {self.format}')
-            # Initialise new data
-            else:
-                self.df = pd.DataFrame(columns=self.columns)
 
             # Parse data from request (once, before checking the columns)
             values = self.request_values(req)
@@ -444,28 +642,26 @@ class Processing:
                 else:
                     data[column] = value
 
-            # Convert data to Series
-            data = pd.Series(data, index=self.columns)
+            # Convert data to Series (object dtype, so values are stored as
+            # sent, e.g. 21 stays 21 instead of becoming 21.0)
+            data = pd.Series(data, index=self.columns, dtype=object)
 
             # Timestamp
             if self.timestamp:
                 data['timestamp'] = now.strftime('%Y-%m-%d %H:%M:%S')
 
-            # Merge data
-            self.df = pd.concat(
-                [self.df, data.to_frame().T], ignore_index=True)
-
-            # Store data to device
-            if self.format == 'csv':
-                self.df.to_csv(path, sep=',', index=False)
-            elif self.format == 'json':
-                self.df.to_json(path, orient='records', indent=4)
-            elif self.format == 'xml':
-                self.df.to_xml(path, index=False)
-            elif self.format == 'sqlite':
-                conn = sqlite3.connect(path)
-                self.df.to_sql('data', conn, if_exists='replace', index=False)
-                conn.close()
+            # Store data to device: append the new row instead of rewriting
+            # the whole file (csv, sqlite), so storing takes the same time
+            # however much data is stored. Concurrent requests and readers
+            # are serialised by a lock.
+            row = data.to_frame().T
+            with self.storage_lock():
+                if self.format == 'csv':
+                    self.append_csv(path, row)
+                elif self.format == 'sqlite':
+                    self.append_sqlite(path, row)
+                else:
+                    self.rewrite(path, row)
 
         if self.format == 'image':
             # Retrieve image from request
@@ -523,23 +719,10 @@ class Processing:
                     self.directory, f'data.{self.format}'
                 )
 
-                # Load existing data
-                if os.path.exists(path):
-                    if self.format == 'csv':
-                        self.df = pd.read_csv(path, sep=',')
-                    elif self.format == 'json':
-                        self.df = pd.read_json(path, orient='records')
-                    elif self.format == 'sqlite':
-                        conn = sqlite3.connect(path)
-                        self.df = pd.read_sql_query('SELECT * FROM data', conn)
-                        conn.close()
-                    elif self.format == 'xml':
-                        self.df = pd.read_xml(path)
-                    else:
-                        raise ValueError(f'Invalid file type: {self.format}')
-                else:
-                    # No stored data (e.g. file removed): do not reuse stale data
-                    self.df = pd.DataFrame()
+                # Load existing data (empty if the file was removed: do not
+                # reuse stale data), locked so a row being written is not read
+                with self.storage_lock():
+                    self.df = self.load(path)
 
                 # Check if data is available
                 if self.df.empty:
@@ -572,23 +755,10 @@ class Processing:
                     self.directory, f'data.{self.format}'
                 )
 
-                # Load existing data
-                if os.path.exists(path):
-                    if self.format == 'csv':
-                        self.df = pd.read_csv(path, sep=',')
-                    elif self.format == 'json':
-                        self.df = pd.read_json(path, orient='records')
-                    elif self.format == 'sqlite':
-                        conn = sqlite3.connect(path)
-                        self.df = pd.read_sql_query('SELECT * FROM data', conn)
-                        conn.close()
-                    elif self.format == 'xml':
-                        self.df = pd.read_xml(path)
-                    else:
-                        raise ValueError(f'Invalid file type: {self.format}')
-                else:
-                    # No stored data (e.g. file removed): do not reuse stale data
-                    self.df = pd.DataFrame()
+                # Load existing data (empty if the file was removed: do not
+                # reuse stale data), locked so a row being written is not read
+                with self.storage_lock():
+                    self.df = self.load(path)
 
                 # Check if data is available
                 if self.df.empty:

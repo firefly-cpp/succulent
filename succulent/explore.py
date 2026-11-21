@@ -15,7 +15,6 @@ import hmac
 import math
 import os
 import secrets
-import sqlite3
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -292,21 +291,9 @@ class Explorer:
             pandas.DataFrame: The stored data (empty if there is none yet).
         """
         path = os.path.join(self.processing.directory, f'data.{self.processing.format}')
-        if not os.path.exists(path):
-            return pd.DataFrame()
-
-        fmt = self.processing.format
-        if fmt == 'csv':
-            return pd.read_csv(path, sep=',')
-        if fmt == 'json':
-            return pd.read_json(path, orient='records')
-        if fmt == 'xml':
-            return pd.read_xml(path)
-        conn = sqlite3.connect(path)
-        try:
-            return pd.read_sql_query('SELECT * FROM data', conn)
-        finally:
-            conn.close()
+        # Locked, so a measurement being written is never read half-way
+        with self.processing.storage_lock():
+            return self.processing.load(path)
 
     def bounds(self):
         """Map each column with a boundary to its minimum and maximum.
