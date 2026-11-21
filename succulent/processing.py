@@ -457,9 +457,9 @@ class Processing:
     def rewrite(self, path, row):
         """Store a row by reading all data and writing the whole file again.
 
-        Used for the json and xml formats, and for csv and sqlite when the
-        stored columns do not include all configured columns (e.g. after a
-        column was added to the configuration).
+        Used when a file is new, when the stored columns do not include all
+        configured columns (e.g. after a column was added to the
+        configuration), or when a json or xml file does not look as expected.
 
         Args:
             path (str): Path to the data file.
@@ -595,6 +595,217 @@ class Processing:
         finally:
             conn.close()
 
+    # Bytes read from the start of a JSON or XML file to find the stored
+    # columns, and from its end to find where the next row goes
+    HEAD_LIMIT = 1024 * 1024
+    TAIL_BYTES = 4096
+
+    def stored_tail(self, path, closing):
+        """Find where a new row can be inserted at the end of a JSON or XML file.
+
+        Only the last bytes of the file are read.
+
+        Args:
+            path (str): Path to the data file.
+            closing (bytes): The closing text of the file (``]`` or ``</data>``).
+
+        Returns:
+            tuple or None: The position of ``closing`` and the bytes after it,
+            or None if the end of the file does not look as expected.
+        """
+        size = os.path.getsize(path)
+        start = max(0, size - self.TAIL_BYTES)
+        with open(path, 'rb') as f:
+            f.seek(start)
+            tail = f.read()
+        position = tail.rfind(closing)
+        if position < 0 or tail[position + len(closing):].strip():
+            return None
+        return start + position, tail[position + len(closing):]
+
+    def json_columns(self, path):
+        """Read the column names of a JSON file from its first record.
+
+        Only the start of the file is read.
+
+        Args:
+            path (str): Path to the JSON file.
+
+        Returns:
+            list or None: The keys of the first record, or None if the file
+            does not start with a JSON array of objects.
+        """
+        decoder = json.JSONDecoder()
+        size = 65536
+        while True:
+            with open(path, 'rb') as f:
+                head = f.read(size)
+            try:
+                text = head.decode('utf-8')
+            except UnicodeDecodeError as err:
+                # A multi-byte character cut at the end of the chunk
+                text = head[:err.start].decode('utf-8', errors='ignore')
+            index = len(text) - len(text.lstrip())
+            if not text[index:index + 1] == '[':
+                return None
+            index += 1
+            while index < len(text) and text[index].isspace():
+                index += 1
+            try:
+                record, _ = decoder.raw_decode(text, index)
+            except json.JSONDecodeError:
+                if len(head) < size or size >= self.HEAD_LIMIT:
+                    return None
+                size *= 4
+                continue
+            return list(record) if isinstance(record, dict) else None
+
+    def xml_columns(self, path):
+        """Read the column names of an XML file from its first row.
+
+        The file is parsed incrementally and only up to the first row.
+
+        Args:
+            path (str): Path to the XML file.
+
+        Returns:
+            list or None: The element names of the first row, or None if the
+            file is not a ``<data>`` element with ``<row>`` elements.
+        """
+        try:
+            with open(path, 'rb') as f:
+                depth = 0
+                for event, element in ET.iterparse(f, events=('start', 'end')):
+                    if event == 'start':
+                        if depth == 0 and element.tag != 'data':
+                            return None
+                        depth += 1
+                        continue
+                    depth -= 1
+                    if depth == 1:
+                        return [child.tag for child in element] if element.tag == 'row' else None
+        except ET.ParseError:
+            return None
+        return None
+
+    def append_json(self, path, row):
+        """Append a row to the JSON file without reading the stored data.
+
+        The new record is written in the same format as before (as by
+        ``DataFrame.to_json(orient='records', indent=4)``) just before the
+        closing ``]``, so the file stays a valid JSON array and is the same
+        as if it had been written again. Only the first record and the end
+        of the file are read. If the file is new, its columns differ, or it
+        does not look as expected, it is written again (see :meth:`rewrite`).
+
+        Args:
+            path (str): Path to the JSON file.
+            row (pandas.DataFrame): The new row.
+
+        Returns:
+            None
+        """
+        if not os.path.exists(path) or os.path.getsize(path) == 0:
+            self.rewrite(path, row)
+            return
+
+        columns = self.json_columns(path)
+        tail = self.stored_tail(path, b']')
+        if (columns is None or tail is None or not set(row.columns) <= set(columns)
+                or len(set(columns)) != len(columns)):
+            self.rewrite(path, row)
+            return
+
+        position, after = tail
+        with open(path, 'rb') as f:
+            f.seek(max(0, position - 64))
+            before = f.read(position - max(0, position - 64)).rstrip()
+        if not before.endswith(b'}'):
+            self.rewrite(path, row)
+            return
+
+        row = row.reindex(columns=columns)
+        # '[\n' + record + '\n]' for a single row
+        record = row.to_json(orient='records', indent=4)[2:-2]
+        self.insert_before(path, position, b',\n' + record.encode('utf-8') + b'\n', b']' + after,
+                           strip_before=True)
+        self.df = row.reset_index(drop=True)
+
+    def append_xml(self, path, row):
+        """Append a row to the XML file without reading the stored data.
+
+        The new ``<row>`` is written in the same format as before (as by
+        ``DataFrame.to_xml(index=False)``) just before the closing
+        ``</data>``, so the file stays valid XML and is the same as if it had
+        been written again. Only the first row and the end of the file are
+        read. If the file is new, its columns differ, or it does not look as
+        expected, it is written again (see :meth:`rewrite`).
+
+        Args:
+            path (str): Path to the XML file.
+            row (pandas.DataFrame): The new row.
+
+        Returns:
+            None
+        """
+        if not os.path.exists(path) or os.path.getsize(path) == 0:
+            self.rewrite(path, row)
+            return
+
+        columns = self.xml_columns(path)
+        tail = self.stored_tail(path, b'</data>')
+        if (columns is None or tail is None or not set(row.columns) <= set(columns)
+                or len(set(columns)) != len(columns)):
+            self.rewrite(path, row)
+            return
+
+        position, after = tail
+        with open(path, 'rb') as f:
+            f.seek(max(0, position - 64))
+            before = f.read(position - max(0, position - 64)).rstrip()
+        if not before.endswith(b'</row>'):
+            self.rewrite(path, row)
+            return
+
+        row = row.reindex(columns=columns)
+        text = row.to_xml(index=False)
+        block = text[text.index('<data>') + len('<data>\n'):text.rindex('\n</data>')]
+        self.insert_before(path, position, b'\n' + block.encode('utf-8') + b'\n', b'</data>' + after,
+                           strip_before=True)
+        self.df = row.reset_index(drop=True)
+
+    @staticmethod
+    def insert_before(path, position, text, ending, strip_before=False):
+        """Write ``text`` and ``ending`` at ``position`` of a file.
+
+        Everything from ``position`` on is replaced. With ``strip_before``,
+        whitespace just before ``position`` is replaced as well, so the new
+        text follows the previous content directly. Line endings in ``text``
+        follow the file (``\\r\\n`` if the file uses them).
+
+        Args:
+            path (str): Path to the file.
+            position (int): Where to write.
+            text (bytes): The text to insert.
+            ending (bytes): The text that ends the file.
+            strip_before (bool): Also replace whitespace before ``position``.
+
+        Returns:
+            None
+        """
+        with open(path, 'r+b') as f:
+            start = max(0, position - 64)
+            f.seek(start)
+            chunk = f.read(position - start)
+            if strip_before:
+                position = start + len(chunk.rstrip())
+            # Use the file's line endings (e.g. \r\n if it was written on Windows)
+            if b'\r\n' in chunk:
+                text = text.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+            f.seek(position)
+            f.write(text + ending)
+            f.truncate()
+
     def process(self, req):
         """Process the incoming request and store the data accordingly.
 
@@ -651,7 +862,7 @@ class Processing:
                 data['timestamp'] = now.strftime('%Y-%m-%d %H:%M:%S')
 
             # Store data to device: append the new row instead of rewriting
-            # the whole file (csv, sqlite), so storing takes the same time
+            # the whole file, so storing takes the same time
             # however much data is stored. Concurrent requests and readers
             # are serialised by a lock.
             row = data.to_frame().T
@@ -660,8 +871,10 @@ class Processing:
                     self.append_csv(path, row)
                 elif self.format == 'sqlite':
                     self.append_sqlite(path, row)
+                elif self.format == 'json':
+                    self.append_json(path, row)
                 else:
-                    self.rewrite(path, row)
+                    self.append_xml(path, row)
 
         if self.format == 'image':
             # Retrieve image from request

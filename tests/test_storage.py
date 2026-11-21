@@ -1,3 +1,4 @@
+import json
 import multiprocessing
 import os
 import shutil
@@ -5,6 +6,7 @@ import sqlite3
 import tempfile
 import threading
 import unittest
+import xml.etree.ElementTree as ET
 from unittest import mock
 
 import pandas as pd
@@ -207,6 +209,154 @@ class TestSqliteAppend(StorageTestCase):
         self.post(self.client, temperature=21, sensor='b')
         data = self.client.get('/data').get_json()['data']
         self.assertEqual([r['sensor'] for r in data], ['a', 'b'])
+
+
+class DocumentAppendMixin:
+    """Shared tests for the JSON and XML formats (one document per file)."""
+
+    FORMAT = None
+    READER = None   # pandas reader that would read the whole file
+
+    def setUp(self):
+        self.api, self.client = self.make_api(format=self.FORMAT)
+
+    def full_write(self, rows, path):
+        df = pd.DataFrame(rows, dtype=object)
+        if self.FORMAT == 'json':
+            df.to_json(path, orient='records', indent=4)
+        else:
+            df.to_xml(path, index=False)
+
+    def stored(self):
+        with open(self.path(self.api), 'rb') as f:
+            return f.read()
+
+    def test_same_file_as_writing_everything_again(self):
+        rows = [
+            {'temperature': 20.5, 'humidity': None, 'sensor': 'a'},
+            {'temperature': 21.5, 'humidity': 40, 'sensor': 'b <&> "č" ] </data> }'},
+            {'temperature': None, 'humidity': 41.25, 'sensor': 'ž' * 20000},
+            {'temperature': -3.5, 'humidity': None, 'sensor': None},
+        ]
+        for row in rows:
+            self.post(self.client, **{k: v for k, v in row.items() if v is not None})
+        reference = os.path.join(self.api.processing.directory, 'reference')
+        self.full_write(rows, reference)
+        with open(reference, 'rb') as f:
+            self.assertEqual(self.stored(), f.read())
+
+        data = self.client.get('/data').get_json()['data']
+        self.assertEqual([r['temperature'] for r in data], [20.5, 21.5, None, -3.5])
+
+    def test_stored_data_is_not_read(self):
+        self.post(self.client, temperature=20)
+        with mock.patch(f'succulent.processing.pd.{self.READER}') as read:
+            self.post(self.client, temperature=21)
+            self.post(self.client, temperature=22)
+        read.assert_not_called()
+        data = self.client.get('/data').get_json()['data']
+        self.assertEqual([r['temperature'] for r in data], [20, 21, 22])
+
+    def test_file_from_older_version(self):
+        # Written as a whole by pandas, as older versions did on every measurement
+        os.makedirs(self.api.processing.directory, exist_ok=True)
+        self.full_write([{'temperature': 20.0, 'humidity': 40.0, 'sensor': 'a'}], self.path(self.api))
+        self.post(self.client, temperature=21, sensor='b')
+        data = self.client.get('/data').get_json()['data']
+        self.assertEqual([r['sensor'] for r in data], ['a', 'b'])
+
+    def test_new_column_in_configuration(self):
+        self.post(self.client, temperature=20)
+        config = dict(CONFIG, timestamp=True, data=CONFIG['data'] + [{'name': 'light'}])
+        api, client = self.make_api(config, format=self.FORMAT, clear=False)
+        self.post(client, temperature=21, light=300)
+        self.post(client, temperature=22, light=310)
+        data = client.get('/data').get_json()['data']
+        self.assertEqual([r['light'] for r in data], [None, 300, 310])
+        self.assertIsNone(data[0]['timestamp'])
+        self.assertIsNotNone(data[2]['timestamp'])
+
+    def test_column_removed_from_configuration(self):
+        self.post(self.client, temperature=20, sensor='a')
+        config = dict(CONFIG, data=CONFIG['data'][:2])
+        api, client = self.make_api(config, format=self.FORMAT, clear=False)
+        with mock.patch(f'succulent.processing.pd.{self.READER}') as read:
+            self.post(client, temperature=21)
+        read.assert_not_called()
+        data = client.get('/data').get_json()['data']
+        self.assertEqual([r['sensor'] for r in data], ['a', None])
+
+    def test_unexpected_end_of_file_is_rewritten(self):
+        self.post(self.client, temperature=20)
+        with open(self.path(self.api), 'ab') as f:
+            f.write(b'\n\n   \n')     # trailing whitespace is fine
+        self.post(self.client, temperature=21)
+        self.assertEqual(len(self.client.get('/data').get_json()['data']), 2)
+
+    def test_windows_line_endings(self):
+        os.makedirs(self.api.processing.directory, exist_ok=True)
+        path = self.path(self.api)
+        self.full_write([{'temperature': 20.0, 'humidity': None, 'sensor': 'a'}], path)
+        with open(path, 'rb') as f:
+            content = f.read().replace(b'\n', b'\r\n')
+        with open(path, 'wb') as f:
+            f.write(content)
+        self.post(self.client, temperature=21, sensor='b')
+        stored = self.stored()
+        self.assertNotIn(b'\n', stored.replace(b'\r\n', b''))
+        data = self.client.get('/data').get_json()['data']
+        self.assertEqual([r['sensor'] for r in data], ['a', 'b'])
+
+    def test_empty_file(self):
+        os.makedirs(self.api.processing.directory, exist_ok=True)
+        open(self.path(self.api), 'w').close()
+        self.post(self.client, temperature=21)
+        self.assertEqual(len(self.client.get('/data').get_json()['data']), 1)
+
+
+class TestJsonAppend(DocumentAppendMixin, StorageTestCase):
+    FORMAT = 'json'
+    READER = 'read_json'
+
+    def test_compact_json_file(self):
+        # A valid JSON array written without indentation, e.g. by another tool
+        os.makedirs(self.api.processing.directory, exist_ok=True)
+        with open(self.path(self.api), 'w') as f:
+            f.write('[{"temperature":20,"humidity":null,"sensor":"a"}]')
+        self.post(self.client, temperature=21, sensor='b')
+        with open(self.path(self.api)) as f:
+            records = json.load(f)
+        self.assertEqual([r['sensor'] for r in records], ['a', 'b'])
+
+    def test_nested_values_in_first_record(self):
+        self.post(self.client, sensor={'id': 1, 'tags': ['a', '}']})
+        with mock.patch('succulent.processing.pd.read_json') as read:
+            self.post(self.client, sensor='b')
+        read.assert_not_called()
+        with open(self.path(self.api)) as f:
+            records = json.load(f)
+        self.assertEqual(records[0]['sensor'], {'id': 1, 'tags': ['a', '}']})
+        self.assertEqual(records[1]['sensor'], 'b')
+
+    def test_not_an_array_is_rewritten(self):
+        os.makedirs(self.api.processing.directory, exist_ok=True)
+        with open(self.path(self.api), 'w') as f:
+            f.write('[]')
+        self.post(self.client, temperature=21)
+        with open(self.path(self.api)) as f:
+            self.assertEqual(len(json.load(f)), 1)
+
+
+class TestXmlAppend(DocumentAppendMixin, StorageTestCase):
+    FORMAT = 'xml'
+    READER = 'read_xml'
+
+    def test_file_stays_valid_xml(self):
+        for i in range(3):
+            self.post(self.client, temperature=20 + i, sensor=f'<s{i}>')
+        root = ET.parse(self.path(self.api)).getroot()
+        self.assertEqual(root.tag, 'data')
+        self.assertEqual([row.find('sensor').text for row in root], ['<s0>', '<s1>', '<s2>'])
 
 
 def store_in_process(config_path, fmt, number, count):
