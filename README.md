@@ -199,7 +199,7 @@ data:
     max:  # Maximum value (optional)
 ```
 
-Measurements are stored in the `data` folder next to your script (e.g. `data/data.csv`). With the `csv` and `sqlite` formats, each measurement is appended to the file, so storing it takes the same time however much data is already stored, which keeps succulent fast on limited hardware such as a Raspberry Pi. Measurements that arrive at the same time, also from several server processes (e.g. gunicorn workers), are all stored. A small lock file (e.g. `data/.data.csv.lock`) is used for this; it can be ignored.
+Measurements are stored in the `data` folder next to your script (e.g. `data/data.csv`). Each measurement is appended to the file (also for `json` and `xml`, where it is inserted before the closing `]` or `</data>`), so storing it takes the same time however much data is already stored, which keeps succulent fast on limited hardware such as a Raspberry Pi. The files keep the same format as written by earlier versions. Measurements that arrive at the same time, also from several server processes (e.g. gunicorn workers), are all stored. A small lock file (e.g. `data/.data.csv.lock`) is used for this; it can be ignored.
 
 To collect images, create a `configuration.yml` file in the root directory and define the following:
 ```yml
